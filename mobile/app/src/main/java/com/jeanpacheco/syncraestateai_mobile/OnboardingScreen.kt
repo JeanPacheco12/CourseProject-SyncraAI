@@ -36,11 +36,18 @@ fun OnboardingScreen() {
             modifier = Modifier.fillMaxSize()
         )
 
-        // 2. Capa de oscurecimiento
+        // 2. Capa de oscurecimiento (Con el filtro azul estilo Figma)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f))
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF2E5B7A).copy(alpha = 0.4f), // Arriba: Más claro y transparente para que se pueda ver el fondo.
+                            Color(0xFF102A3E)                     // Abajo: Azul oscuro y 100% sólido para el efecto visto en Figma.
+                        )
+                    )
+                )
         )
 
         // 3. Capa de Contenido
