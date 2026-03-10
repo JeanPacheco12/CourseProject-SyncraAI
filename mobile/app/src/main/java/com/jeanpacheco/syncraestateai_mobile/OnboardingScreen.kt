@@ -2,7 +2,6 @@ package com.jeanpacheco.syncraestateai_mobile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,12 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size // Importamos size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale // Importamos scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -26,45 +27,52 @@ import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraGreen
 
 @Composable
 fun OnboardingScreen() {
-    // El box permite apilar cosas una encima de la otra (como si fueran capas en Photoshop).
     Box(modifier = Modifier.fillMaxSize()) {
-        // Box se divide en:
-        // 1. Capa del fondo (La imagen del edificio de la pantalla de inicio).
+        // 1. Capa del fondo
         Image(
             painter = painterResource(id = R.drawable.bg_edificio),
             contentDescription = "Fondo de la ciudad",
-            contentScale = ContentScale.Crop, // Esto hace que la imagen llene toda la pantalla sin deformarse.
+            contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
-        // 2. Capa de oscurecimiento (Para que el logo y el botón resalten como en los mock-ups de Figma).
+        // 2. Capa de oscurecimiento
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f)) // Un 60% de oscuridad.
+                .background(Color.Black.copy(alpha = 0.6f))
         )
 
-        // 3. Capa de Contenido (Logo arriba y botón abajo).
+        // 3. Capa de Contenido
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp, vertical = 48.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween // Esto empuja el logo arriba y el botón abajo.
+                .padding(horizontal = 32.dp)
+                .padding(bottom = 48.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Sección superior: El Logo.
-            Image(
-                painter = painterResource(id = R.drawable.logo_syncra),
-                contentDescription = "Logo Syncra",
-                modifier = Modifier
-                    .height(180.dp) // Se puede ajustar este número si el logo se ve muy grande o pequeño.
-                    .padding(top = 40.dp)
-            )
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                // El truco que apliqué: Quitué el fillMaxWidth responsivo porque la imagen tenia mucho aire y empujaba el botón hacia abajo al escalarla.
+                // Usé una altura fija grande y un escalado manual firme.
+                Image(
+                    painter = painterResource(id = R.drawable.logo_syncra),
+                    contentDescription = "Logo Syncra",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .padding(top = 90.dp) // top = 90 para bajar el logo y que quede similar al de Figma.
+                        .height(300.dp) // Altura grande.
+                        .fillMaxWidth() // Que intente ocupar el ancho restante.
+                        .scale(0.80f) // Escalar la imagen con una escala prudente para la pantalla principal de Onboarding.
+                )
+            }
 
-            // Sección inferior: El Botón de Comenzar.
+            // Sección inferior: El Botón y texto.
             Button(
-                onClick = { /* TODO: Mañana haremos que este botón navegue al Login */ },
+                onClick = { /* TODO: Navegación */ },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -77,6 +85,13 @@ fun OnboardingScreen() {
                     color = Color.White
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Plataforma para Agentes",
+                color = Color.White,
+                fontSize = 14.sp
+            )
         }
     }
 }
