@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
 
                         // Ruta 3: El Login (la dejamos preparada para después).
                         composable("login") {
-                            // LoginScreen(navController = navController) // La descomentaremos luego.
+                            LoginScreen(navController = navController) // La descomentaremos luego.
                         }
                     }
                 }
