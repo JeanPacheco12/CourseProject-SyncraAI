@@ -8,8 +8,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -18,156 +18,216 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraGreen
 import kotlinx.coroutines.launch
 
-// 1. Una estructura de datos para guardar la info de cada pestaña.
+// 1. Estructura de datos
 data class OnboardingPage(
     val imageRes: Int,
-    val title: String,
+    val titleFirstPart: String,
+    val titleBoldPart: String,
     val description: String
 )
 
 @Composable
 fun OnboardingPagerScreen(navController: NavController) {
-    // 2. La lista con los textos reales de Figma.
+    // Colores exactos de tu Figma
+    val SyncraGreen = Color(0xFF8BC83F)
+    val SyncraDarkBlue = Color(0xFF204D6C)
+    val OmitirBgColor = Color(0xFFE5E5E5)
+
+    // 2. Tu lista conservada intacta
     val pages = listOf(
         OnboardingPage(
-            imageRes = R.drawable.ob_1, // Placeholder: Luego lo cambias por la imagen real
-            title = "Gestiona tu agenda y\npropiedades",
+            imageRes = R.drawable.ob_1,
+            titleFirstPart = "Gestiona tu ",
+            titleBoldPart = "agenda y\npropiedades",
             description = "Organiza tus citas, clientes e inmuebles desde un solo lugar para no perder ninguna oportunidad de venta."
         ),
         OnboardingPage(
             imageRes = R.drawable.ob_2,
-            title = "Cierra ventas usando\nInteligencia Artificial",
+            titleFirstPart = "Cierra ventas usando\n",
+            titleBoldPart = "Inteligencia Artificial",
             description = "Genera mensajes persuasivos al instante con nuestra integración de Gemini AI. Envía la propuesta perfecta por WhatsApp con un solo clic."
         ),
         OnboardingPage(
             imageRes = R.drawable.ob_3,
-            title = "Lleva tus ventas al\nSiguiente nivel",
+            titleFirstPart = "Lleva tus ventas al\n",
+            titleBoldPart = "Siguiente nivel",
             description = "Mantén el control total de tus clientes y sincroniza tu progreso en tiempo real con la plataforma web de tu gerencia."
         )
     )
 
-    // 3. Controladores del carrusel.
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val coroutineScope = rememberCoroutineScope() // Sirve para animar el cambio de pestaña al pulsar el botón.
+    val coroutineScope = rememberCoroutineScope()
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
+    Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
 
-        Column(modifier = Modifier.fillMaxSize()) {
+        // --- CAPA 1: EL HEADER (Logo tuyo + Omitir estilo cápsula) ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 48.dp, start = 24.dp, end = 24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Tu Logo Syncra conservado
+            Image(
+                painter = painterResource(id = R.drawable.bg_logo),
+                contentDescription = "Logo Syncra",
+                modifier = Modifier.size(width = 50.dp, height = 30.dp),
+                contentScale = ContentScale.Fit
+            )
 
-            // 4. El Carrusel que se puede deslizar.
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f)
-            ) { position ->
-                val page = pages[position]
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // Imagen superior con las esquinas de abajo redondeadas (como en Figma).
-                    Image(
-                        painter = painterResource(id = page.imageRes),
-                        contentDescription = "Imagen ilustrativa",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(0.6f) // La imagen ocupa el 60% de la altura.
-                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                    )
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // Título.
-                    Text(
-                        text = page.title,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF102A3E), // El azul oscuro de Syncra.
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Descripción.
-                    Text(
-                        text = page.description,
-                        fontSize = 16.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-                }
-            }
-
-            // 5. Los puntitos indicadores (Dots).
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.Center
+            // Botón Omitir gris y redondeado
+            Surface(
+                onClick = { navController.navigate("login") },
+                color = OmitirBgColor,
+                shape = RoundedCornerShape(50),
             ) {
-                repeat(pages.size) { iteration ->
-                    // Si es la página actual, el punto es Verde y más ancho. Si no, es Gris y pequeño.
-                    val color = if (pagerState.currentPage == iteration) SyncraGreen else Color.LightGray
-                    val width = if (pagerState.currentPage == iteration) 24.dp else 10.dp
-
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(width = width, height = 10.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(color)
-                    )
-                }
-            }
-
-            // 6. Botón dinámico inferior.
-            Button(
-                onClick = {
-                    if (pagerState.currentPage == pages.size - 1) {
-                        // Si estamos en la última pestaña, vamos al Login.
-                        navController.navigate("login")
-                    } else {
-                        // Si no, avanzamos a la siguiente pestaña.
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 24.dp)
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SyncraGreen)
-            ) {
-                // El texto del botón cambia automáticamente.
                 Text(
-                    text = if (pagerState.currentPage == pages.size - 1) "Comenzar" else "Siguiente",
-                    fontSize = 18.sp,
+                    text = "Omitir",
+                    color = Color.DarkGray,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
         }
 
-        // 7. Botón flotante de "Omitir" arriba a la derecha.
-        TextButton(
-            onClick = { navController.navigate("login") }, // Salta directo al login.
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 48.dp, end = 16.dp)
-        ) {
-            Text(text = "Omitir", color = Color.White, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // --- CAPA 2: EL CARRUSEL ---
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { position ->
+            val page = pages[position]
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp)
+            ) {
+
+                // --- SECCIÓN TEXTO ALINEADO A LA IZQUIERDA ---
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Normal)) {
+                            append(page.titleFirstPart)
+                        }
+                        // Color resaltado exacto (#204D6C)
+                        withStyle(style = SpanStyle(color = SyncraDarkBlue, fontWeight = FontWeight.ExtraBold)) {
+                            append(page.titleBoldPart)
+                        }
+                    },
+                    fontSize = 28.sp,
+                    lineHeight = 36.sp,
+                    textAlign = TextAlign.Start, // Pegado a la izquierda
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = page.description,
+                    fontSize = 14.sp,
+                    color = Color.DarkGray,
+                    textAlign = TextAlign.Start, // Pegado a la izquierda
+                    lineHeight = 20.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // --- SECCIÓN IMAGEN + OVERLAYS (Botón y Visualizer) ---
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f) // Esto empuja la imagen hasta abajo
+                        .padding(bottom = 32.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                ) {
+
+                    // La Imagen de fondo
+                    Image(
+                        painter = painterResource(id = page.imageRes),
+                        contentDescription = "Imagen de onboarding",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    // Un degradado sutil abajo para que la línea blanca y el botón resalten mejor
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(Color.Black.copy(alpha = 0.25f))
+                    )
+
+                    // Contenedor del Botón y la Línea Visualizer (Apilados sobre la imagen)
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        // Líneas blancas estilo "Visualizer" de Figma
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        ) {
+                            repeat(pages.size) { iteration ->
+                                // Línea blanca brillante si es la actual, gris si no
+                                val color = if (pagerState.currentPage == iteration) Color.White else Color.White.copy(alpha = 0.4f)
+                                val width = if (pagerState.currentPage == iteration) 32.dp else 24.dp
+
+                                Box(
+                                    modifier = Modifier
+                                        .height(3.dp)
+                                        .width(width)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(color)
+                                )
+                            }
+                        }
+
+                        // Botón Verde corto (#8BC83F)
+                        Button(
+                            onClick = {
+                                if (pagerState.currentPage == pages.size - 1) {
+                                    navController.navigate("login")
+                                } else {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth(0.65f) // Más corto, ocupa el 65% del ancho
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = SyncraGreen)
+                        ) {
+                            Text(
+                                text = if (pagerState.currentPage == pages.size - 1) "Comenzar" else "Siguiente",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
