@@ -9,14 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size // Importamos size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale // Importamos scale
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -29,7 +29,7 @@ import androidx.navigation.NavController
 @Composable
 fun OnboardingScreen(navController: NavController) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // 1. Capa del fondo
+        // 1. Capa del fondo.
         Image(
             painter = painterResource(id = R.drawable.bg_edificio),
             contentDescription = "Fondo de la ciudad",
@@ -37,7 +37,7 @@ fun OnboardingScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize()
         )
 
-        // 2. Capa de oscurecimiento (Con el filtro azul estilo Figma)
+        // 2. Capa de oscurecimiento (Con el filtro azul estilo Figma).
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -51,7 +51,7 @@ fun OnboardingScreen(navController: NavController) {
                 )
         )
 
-        // 3. Capa de Contenido
+        // 3. Capa de Contenido.
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -64,40 +64,41 @@ fun OnboardingScreen(navController: NavController) {
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                // El truco que apliqué: Quitué el fillMaxWidth responsivo porque la imagen tenia mucho aire y empujaba el botón hacia abajo al escalarla.
-                // Usé una altura fija grande y un escalado manual firme.
+                // Logo.
                 Image(
                     painter = painterResource(id = R.drawable.logo_syncra),
                     contentDescription = "Logo Syncra",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .padding(top = 90.dp) // top = 90 para bajar el logo y que quede similar al de Figma.
-                        .height(300.dp) // Altura grande.
-                        .fillMaxWidth() // Que intente ocupar el ancho restante.
-                        .scale(0.80f) // Escalar la imagen con una escala prudente para la pantalla principal de Onboarding.
+                        .padding(top = 90.dp)
+                        .height(300.dp)
+                        .fillMaxWidth()
+                        .scale(0.80f)
                 )
             }
 
             // Sección inferior: El Botón y texto.
             Button(
                 onClick = {
-                    // Cambiamos el destino: ahora vamos al carrusel
                     navController.navigate("onboarding_pager")
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                    .fillMaxWidth(0.65f) // Ocupa el 65% del ancho.
+                    .height(50.dp),      // Altura exacta para la pantalla principal.
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SyncraGreen)
             ) {
                 Text(
                     text = "Comenzar",
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Spacer para despegar el botón del texto de "Plataforma para agentes".
+            Spacer(modifier = Modifier.height(28.dp))
+
             Text(
                 text = "Plataforma para Agentes",
                 color = Color.White,

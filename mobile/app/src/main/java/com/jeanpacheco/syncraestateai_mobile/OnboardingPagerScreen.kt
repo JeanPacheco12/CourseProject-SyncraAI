@@ -2,6 +2,7 @@ package com.jeanpacheco.syncraestateai_mobile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -27,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
 
 // 1. Estructura de datos
 data class OnboardingPage(
@@ -38,12 +41,12 @@ data class OnboardingPage(
 
 @Composable
 fun OnboardingPagerScreen(navController: NavController) {
-    // Colores exactos de tu Figma
+    // Colores exactos del diseño original de Figma.
     val SyncraGreen = Color(0xFF8BC83F)
     val SyncraDarkBlue = Color(0xFF204D6C)
     val OmitirBgColor = Color(0xFFE5E5E5)
 
-    // 2. Tu lista conservada intacta
+    // 2. páginas del carrusel en forma de lista
     val pages = listOf(
         OnboardingPage(
             imageRes = R.drawable.ob_1,
@@ -70,7 +73,7 @@ fun OnboardingPagerScreen(navController: NavController) {
 
     Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
 
-        // --- CAPA 1: EL HEADER (Logo tuyo + Omitir estilo cápsula) ---
+        // CAPA 1: EL HEADER.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -78,33 +81,46 @@ fun OnboardingPagerScreen(navController: NavController) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Tu Logo Syncra conservado
+
+            // LOGO: Tamaño fijo restaurado y alineación mantenida.
             Image(
                 painter = painterResource(id = R.drawable.bg_logo),
-                contentDescription = "Logo Syncra",
-                modifier = Modifier.size(width = 50.dp, height = 30.dp),
+                contentDescription = "Logo Syncra (Ir a inicio)",
+                modifier = Modifier
+                    .size(width = 150.dp, height = 45.dp) // Regresamos al tamaño grande.
+                    .clickable (
+                        // ESTAS DOS LÍNEAS QUITAN EL EFECTO VISUAL SOMBREADO AL PRESIONAR EL LOGO.
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ){
+                        navController.navigate("onboarding") {
+                            // Esto evita que se acumulen múltiples pantallas iguales si se apacha mucho.
+                            popUpTo(0)
+                        }
+                    },
+                alignment = Alignment.CenterStart,
                 contentScale = ContentScale.Fit
             )
 
-            // Botón Omitir gris y redondeado
+            // BOTÓN OMITIR.
             Surface(
                 onClick = { navController.navigate("login") },
                 color = OmitirBgColor,
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(50)
             ) {
                 Text(
                     text = "Omitir",
                     color = Color.DarkGray,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 36.dp, vertical = 8.dp)
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- CAPA 2: EL CARRUSEL ---
+        // CAPA 2: EL CARRUSEL.
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
@@ -117,20 +133,19 @@ fun OnboardingPagerScreen(navController: NavController) {
                     .padding(horizontal = 24.dp)
             ) {
 
-                // --- SECCIÓN TEXTO ALINEADO A LA IZQUIERDA ---
+                // SECCIÓN TEXTO ALINEADO A LA IZQUIERDA.
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Normal)) {
                             append(page.titleFirstPart)
                         }
-                        // Color resaltado exacto (#204D6C)
                         withStyle(style = SpanStyle(color = SyncraDarkBlue, fontWeight = FontWeight.ExtraBold)) {
                             append(page.titleBoldPart)
                         }
                     },
                     fontSize = 28.sp,
                     lineHeight = 36.sp,
-                    textAlign = TextAlign.Start, // Pegado a la izquierda
+                    textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -140,23 +155,23 @@ fun OnboardingPagerScreen(navController: NavController) {
                     text = page.description,
                     fontSize = 14.sp,
                     color = Color.DarkGray,
-                    textAlign = TextAlign.Start, // Pegado a la izquierda
+                    textAlign = TextAlign.Start,
                     lineHeight = 20.sp,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // --- SECCIÓN IMAGEN + OVERLAYS (Botón y Visualizer) ---
+                // SECCIÓN IMAGEN + OVERLAYS (Botón y Visualizer).
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f) // Esto empuja la imagen hasta abajo
+                        .weight(1f) // Esto empuja la imagen hasta abajo.
                         .padding(bottom = 32.dp)
                         .clip(RoundedCornerShape(32.dp))
                 ) {
 
-                    // La Imagen de fondo
+                    // La Imagen de fondo.
                     Image(
                         painter = painterResource(id = page.imageRes),
                         contentDescription = "Imagen de onboarding",
@@ -164,16 +179,7 @@ fun OnboardingPagerScreen(navController: NavController) {
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    // Un degradado sutil abajo para que la línea blanca y el botón resalten mejor
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .align(Alignment.BottomCenter)
-                            .background(Color.Black.copy(alpha = 0.25f))
-                    )
-
-                    // Contenedor del Botón y la Línea Visualizer (Apilados sobre la imagen)
+                    // Contenedor del Botón y la Línea Visualizer.
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -181,27 +187,27 @@ fun OnboardingPagerScreen(navController: NavController) {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
-                        // Líneas blancas estilo "Visualizer" de Figma
+                        // VISUALIZER.
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            modifier = Modifier
+                                .padding(bottom = 24.dp)
+                                .width(100.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(50))
                         ) {
                             repeat(pages.size) { iteration ->
-                                // Línea blanca brillante si es la actual, gris si no
                                 val color = if (pagerState.currentPage == iteration) Color.White else Color.White.copy(alpha = 0.4f)
-                                val width = if (pagerState.currentPage == iteration) 32.dp else 24.dp
 
                                 Box(
                                     modifier = Modifier
-                                        .height(3.dp)
-                                        .width(width)
-                                        .clip(RoundedCornerShape(50))
+                                        .weight(1f)
+                                        .fillMaxHeight()
                                         .background(color)
                                 )
                             }
                         }
 
-                        // Botón Verde corto (#8BC83F)
+                        // Botón Verde.
                         Button(
                             onClick = {
                                 if (pagerState.currentPage == pages.size - 1) {
@@ -213,7 +219,7 @@ fun OnboardingPagerScreen(navController: NavController) {
                                 }
                             },
                             modifier = Modifier
-                                .fillMaxWidth(0.65f) // Más corto, ocupa el 65% del ancho
+                                .fillMaxWidth(0.65f)
                                 .height(50.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = SyncraGreen)
