@@ -8,21 +8,48 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+
+// Estos son los imports nuevos y agregados para la función de navegación que me faltaban:
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+
 import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraEstateAIMobileTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Mantenemos esto que tenías, hace que la app se vea moderna (sin barra negra arriba).
         enableEdgeToEdge()
+
         setContent {
             SyncraEstateAIMobileTheme {
-                // Surface actúa como el lienzo principal, tomando el color de fondo del tema.
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Aquí conecté la pantalla de Onboarding.
-                    OnboardingScreen()
+                    // AQUÍ EMPIEZA LA MAGIA DEL ROUTER (mapa de direcciones de la app).
+                    val navController = rememberNavController()
+
+                    // startDestination = "onboarding" le dice que arranque en la pantalla del edificio.
+                    NavHost(navController = navController, startDestination = "onboarding") {
+
+                        // Ruta 1: La pantalla del edificio (Welcome).
+                        composable("onboarding") {
+                            OnboardingScreen(navController = navController)
+                        }
+
+                        // Ruta 2: El carrusel de pestañas (nuestro próximo objetivo).
+                        composable("onboarding_pager") {
+                            OnboardingPagerScreen(navController = navController)
+                        }
+
+                        // Ruta 3: El Login (la dejamos preparada para después).
+                        composable("login") {
+                            // LoginScreen(navController = navController) // La descomentaremos luego.
+                        }
+                    }
                 }
             }
         }
