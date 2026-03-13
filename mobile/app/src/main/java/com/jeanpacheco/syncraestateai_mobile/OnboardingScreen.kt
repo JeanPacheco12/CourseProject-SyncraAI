@@ -24,9 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraGreen
+import androidx.navigation.NavController
 
 @Composable
-fun OnboardingScreen() {
+fun OnboardingScreen(navController: NavController) {
     Box(modifier = Modifier.fillMaxSize()) {
         // 1. Capa del fondo
         Image(
@@ -79,7 +80,10 @@ fun OnboardingScreen() {
 
             // Sección inferior: El Botón y texto.
             Button(
-                onClick = { /* TODO: Navegación */ },
+                onClick = {
+                    // Cambiamos el destino: ahora vamos al carrusel
+                    navController.navigate("onboarding_pager")
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

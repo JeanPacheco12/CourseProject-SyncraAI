@@ -53,4 +53,6 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // Como Jetpack Compose no trae la herramienta de navegación por defecto, tuve que agregar esta librería para ejecutar esa función.
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 }
