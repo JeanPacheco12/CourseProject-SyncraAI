@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const interestedProperties = [
   {
@@ -246,13 +247,20 @@ export default function ClientProfilePage() {
 
                   <div className="mt-8 space-y-3">
                     <button className="w-full rounded-2xl bg-[#8bb58f] px-5 py-4 text-[17px] font-semibold text-white transition hover:opacity-90">
-                      Editar perfil
+                        Editar perfil
                     </button>
 
                     <button className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-[17px] font-semibold text-slate-700 transition hover:bg-slate-50">
-                      Contactar cliente
+                        Contactar cliente
                     </button>
-                  </div>
+
+                    <Link
+                        href="/smart_pitch"
+                        className="block w-full rounded-2xl bg-[#244d66] px-5 py-4 text-center text-[17px] font-semibold text-white transition hover:opacity-90"
+                    >
+                        Generar Smart Pitch
+                    </Link>
+                    </div>
                 </div>
 
                 <div className="rounded-[28px] border border-slate-200 bg-white p-7 shadow-sm">
