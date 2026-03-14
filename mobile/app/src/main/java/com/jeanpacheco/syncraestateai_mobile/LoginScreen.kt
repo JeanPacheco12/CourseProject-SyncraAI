@@ -197,7 +197,7 @@ fun LoginScreen(navController: NavController) {
             Button(
                 onClick = {
                     // Por ahora, solo simula el error. Luego conectaremos esto con Firebase.
-                    showError = !showError
+                    navController.navigate("home_screen")
                 },
                 modifier = Modifier
                     .fillMaxWidth()

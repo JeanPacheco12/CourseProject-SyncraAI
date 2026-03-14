@@ -45,9 +45,14 @@ class MainActivity : ComponentActivity() {
                             OnboardingPagerScreen(navController = navController)
                         }
 
-                        // Ruta 3: El Login (la dejamos preparada para después).
+                        // Ruta 3: El Login.
                         composable("login") {
-                            LoginScreen(navController = navController) // La descomentaremos luego.
+                            LoginScreen(navController = navController)
+                        }
+
+                        // Ruta 4: El Home Screen.
+                        composable("home_screen") {
+                            HomeScreen(navController = navController)
                         }
                     }
                 }
