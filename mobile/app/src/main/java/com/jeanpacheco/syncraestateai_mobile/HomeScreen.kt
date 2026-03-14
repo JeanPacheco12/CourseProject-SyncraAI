@@ -1,6 +1,7 @@
 package com.jeanpacheco.syncraestateai_mobile
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -113,7 +115,12 @@ fun HeaderSection() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "SYNCRA", color = SyncraPrimary, fontSize = 20.sp, fontWeight = FontWeight.Black)
+            Image(
+                painter = painterResource(id = R.drawable.logo_syncra),
+                contentDescription = "Logo Syncra",
+                modifier = Modifier.height(56.dp), // Aumentamos la altura (puedes subirlo a 64.dp si aún lo ves pequeño)
+                contentScale = ContentScale.Fit
+            )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
@@ -405,7 +412,7 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
 fun HomeBottomNavigationBar() {
     NavigationBar(
         containerColor = Color.White,
-        tonalElevation = 16.dp
+        tonalElevation = 0.dp
     ) {
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
