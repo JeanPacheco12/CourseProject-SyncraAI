@@ -53,15 +53,15 @@ fun HomeScreen(navController: NavController) {
             // ==========================================
             Box(modifier = Modifier.fillMaxWidth()) {
 
-                // 1. EL FONDO CURVO
-                Canvas(modifier = Modifier.fillMaxWidth().height(310.dp)) {
+                // 1. EL FONDO CURVO AJUSTADO A FIGMA
+                // Redujimos la altura a 240.dp para quitar el espacio en blanco sobrante
+                Canvas(modifier = Modifier.fillMaxWidth().height(240.dp)) {
                     val path = Path().apply {
                         moveTo(0f, 0f)
-                        lineTo(size.width, 0f)
-                        lineTo(size.width, size.height * 0.85f)
+                        lineTo(size.width * 0.68f, 0f)
                         quadraticTo(
-                            size.width * 0.45f, size.height * 1.05f,
-                            0f, size.height * 0.35f
+                            size.width * 0.5f, size.height * 0.8f,
+                            0f, size.height * 0.7f
                         )
                         close()
                     }
@@ -78,7 +78,8 @@ fun HomeScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Espaciado sutil para separar el buscador de los botones
+            Spacer(modifier = Modifier.height(20.dp))
 
             // ==========================================
             // SECCIÓN INFERIOR: CONTENIDO PRINCIPAL
@@ -104,7 +105,6 @@ fun HeaderSection() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            // CORRECCIÓN: Separamos el padding horizontal del top
             .padding(horizontal = 24.dp)
             .padding(top = 40.dp)
     ) {
