@@ -55,10 +55,14 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(navController = navController)
                         }
 
-                        // ↓ AQUÍ AGREGAMOS LA NUEVA RUTA ↓
                         // Ruta 5: Pantalla de Clientes (Management Pages).
                         composable("clients") {
                             ClientsScreen(navController = navController)
+                        }
+
+                        // Ruta 6: Pantalla del perfil del cliente.
+                        composable("client_profile") {
+                            ClientProfileScreen(navController = navController)
                         }
                     }
                 }

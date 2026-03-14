@@ -86,9 +86,7 @@ fun ClientsScreen(navController: NavController) {
                         date = "12 oct 2024",
                         imageRes = R.drawable.img_prospecto_1,
                         bgColor = ColorVisitaHoy,
-                        onClick = {
-                            // TODO: Navegar al perfil
-                        }
+                        onClick = { navController.navigate("client_profile") }
                     )
                 }
                 item {
