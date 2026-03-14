@@ -90,7 +90,11 @@ fun HomeScreen(navController: NavController) {
                 HeroCarouselSection()
                 Spacer(modifier = Modifier.height(32.dp))
                 ActivePropertiesSection()
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(32.dp)) // Espacio nuevo
+                ActiveProspectsSection() // NUEVA SECCIÓN
+                Spacer(modifier = Modifier.height(32.dp)) // Espacio nuevo
+                AgendaSection() // NUEVA SECCIÓN
+                Spacer(modifier = Modifier.height(100.dp)) // Espacio final para que no lo tape la barra inferior
             }
         }
     }
@@ -509,5 +513,196 @@ fun HomeBottomNavigationBar() {
             onClick = { /* Navegar a perfil */ },
             colors = NavigationBarItemDefaults.colors(unselectedIconColor = SyncraPrimary)
         )
+    }
+}
+
+// ==========================================
+// SECCIÓN DE CLIENTES ACTIVOS
+// ==========================================
+@Composable
+fun ActiveProspectsSection() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Clientes activos", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+            Text(text = "Ver todos", fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            item { ProspectItem(name = "Amanda Cifuentes", imageRes = R.drawable.img_prospecto_1) }
+            item { ProspectItem(name = "Anderson Souza", imageRes = R.drawable.img_prospecto_2) }
+            item { ProspectItem(name = "Ana Reyes", imageRes = R.drawable.img_prospecto_3) }
+            item { ProspectItem(name = "Ramiro Castillo", imageRes = R.drawable.img_prospecto_4) }
+            item { ProspectItem(name = "Gustavo Ramos", imageRes = R.drawable.img_prospecto_5) }
+        }
+    }
+}
+
+@Composable
+fun ProspectItem(name: String, imageRes: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = name,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = name, fontSize = 13.sp, color = SyncraPrimary, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+fun ExploreProspectItem() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(SurfaceGray)
+                .border(1.dp, Color(0xFFDDE3E9), CircleShape) // Borde sutil gris claro
+                .clickable { /* Acción para buscar prospectos */ },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Search, contentDescription = "Explorar", tint = SyncraPrimary, modifier = Modifier.size(28.dp))
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Explorar", fontSize = 13.sp, color = SyncraPrimary, fontWeight = FontWeight.Medium)
+    }
+}
+
+// ==========================================
+// SECCIÓN DE AGENDA
+// ==========================================
+@Composable
+fun AgendaSection() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Agenda", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+            Text(text = "Ver toda", fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Usamos Column porque al estar dentro del scroll principal, un LazyColumn daría error
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            AgendaCard(
+                time = "09:00 - 10:00 AM",
+                dateTag = "Hoy",
+                clientName = "Alejandro Martínez",
+                location = "Zona 15, Cd. de Guatemala",
+                imageRes = R.drawable.propiedad_1
+            )
+            AgendaCard(
+                time = "03:00 - 04:00 PM",
+                dateTag = "Mañana",
+                clientName = "Sofía Castro",
+                location = "Zona 10, Cd. de Guatemala",
+                imageRes = R.drawable.propiedad_2
+            )
+        }
+    }
+}
+
+@Composable
+fun AgendaCard(time: String, dateTag: String, clientName: String, location: String, imageRes: Int) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceGray)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // Lado izquierdo: Imagen + Icono WSP
+            Box(
+                modifier = Modifier
+                    .size(90.dp) // Tarjeta de imagen un poco más pequeña para diferenciarla
+                    .clip(RoundedCornerShape(16.dp))
+            ) {
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = "Propiedad Agenda",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                // Botón de WhatsApp encima de la imagen (Esquina superior derecha)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .size(26.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF25D366)), // Color verde de WhatsApp
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.wsp_logo_1),
+                        contentDescription = "Contactar",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Lado derecho: Información
+            Column(modifier = Modifier.fillMaxWidth()) {
+
+                // Fila 1: Hora y Etiqueta (Hoy/Mañana)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = time, fontSize = 13.sp, color = SyncraPrimary, fontWeight = FontWeight.ExtraBold)
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF8DB049))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(text = dateTag, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Fila 2: Nombre
+                Text(text = clientName, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Fila 3: Ubicación
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_ubicacion),
+                        contentDescription = "Ubicación",
+                        modifier = Modifier.size(14.dp),
+                        tint = TextGray
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = location, fontSize = 13.sp, color = TextGray, maxLines = 1)
+                }
+            }
+        }
     }
 }
