@@ -92,7 +92,8 @@ fun HomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(32.dp))
                 ActivePropertiesSection()
                 Spacer(modifier = Modifier.height(32.dp))
-                ActiveProspectsSection()
+                ActiveProspectsSection(navController = navController)
+
                 Spacer(modifier = Modifier.height(32.dp))
                 AgendaSection()
 
@@ -522,7 +523,7 @@ fun HomeBottomNavigationBar() {
 // SECCIÓN DE CLIENTES ACTIVOS
 // ==========================================
 @Composable
-fun ActiveProspectsSection() {
+fun ActiveProspectsSection(navController: NavController) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -530,7 +531,17 @@ fun ActiveProspectsSection() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "Clientes activos", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
-            Text(text = "Ver todos", fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.SemiBold)
+
+            // ¡AQUÍ ESTÁ LA MAGIA! Le agregamos un .clickable
+            Text(
+                text = "Ver todos",
+                fontSize = 12.sp,
+                color = SyncraPrimary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable {
+                    navController.navigate("clients") // Viaja a la pantalla de clientes
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
