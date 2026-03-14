@@ -247,33 +247,56 @@ fun HeroCarouselSection() {
         item {
             HeroCard(
                 title = "Resumen del\ndía",
-                subtitle = "¡Tienes 3 citas programadas para hoy!"
+                subtitle = "¡Tienes 3 citas programadas para hoy!",
+                imageRes = R.drawable.img_carrusel_1
             )
         }
         item {
             HeroCard(
                 title = "Nuevos\nProspectos",
-                subtitle = "Tienes 5 mensajes sin leer."
+                subtitle = "Tienes 5 mensajes sin leer.",
+                imageRes = R.drawable.img_carrusel_2
             )
         }
     }
 }
 
 @Composable
-fun HeroCard(title: String, subtitle: String) {
+fun HeroCard(title: String, subtitle: String, imageRes: Int) {
     Box(
         modifier = Modifier
             .width(280.dp)
             .height(180.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(SyncraPrimary.copy(alpha = 0.8f))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        // 1. La imagen de fondo de la casa
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = "Fondo Carrusel",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop // Asegura que la imagen llene la tarjeta sin deformarse
+        )
+
+        // 2. Filtro oscuro/azulado para que el texto blanco resalte (como en tu Figma)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(SyncraPrimary.copy(alpha = 0.4f)) // 40% de opacidad de tu color primario
+        )
+
+        // 3. Textos alineados al centro-izquierda
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.CenterStart)
+                .padding(bottom = 16.dp) // Un pequeño empuje hacia arriba para que no choque con el botón
+        ) {
             Text(text = title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = subtitle, color = Color.White, fontSize = 12.sp)
         }
 
+        // 4. El botón con la flecha (se queda igualito)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomStart)
