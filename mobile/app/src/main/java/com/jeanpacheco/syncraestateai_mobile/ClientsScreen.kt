@@ -24,12 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-// Definición de colores según los estados del diseño
-val ColorFirmaHoy = Color(0xFF8B5CF6) // Morado
-val ColorVisitaHoy = Color(0xFFF97316) // Naranja
-val ColorEntrega = Color(0xFFEF4444) // Rojo
-val ColorSeguimiento = Color(0xFF10B981) // Verde Teal
-val ColorNuevo = Color(0xFF8DB049) // Verde Claro
+// Definición de colores según los parámetros
+val ColorVisitaHoy = Color(0xFF8BC83F) // Verde limón
+val ColorEntrega = Color(0xFF3675D3) // Azul
+val ColorFirmaHoy = Color(0xFFED9923) // Naranja
+val ColorSeguimiento = Color(0xFFE5CF23) // Amarillo
+val ColorNuevo = Color(0xFFA13FC8) // Morado
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +37,7 @@ fun ClientsScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Clientes", fontWeight = FontWeight.Bold, color = SyncraPrimary, fontSize = 20.sp) },
+                title = { Text("Clientes Activos", fontWeight = FontWeight.Bold, color = SyncraPrimary, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = SyncraPrimary)
@@ -55,7 +55,13 @@ fun ClientsScreen(navController: NavController) {
                 .padding(paddingValues)
                 .padding(horizontal = 24.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            // Subtítulo
+            Text(
+                text = "Este es el listado de tus clientes recurrentes",
+                color = Color.Gray,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
 
             // 1. Buscador
             ClientsSearchBar()
@@ -67,54 +73,76 @@ fun ClientsScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 3. Lista de Clientes
+            // 3. Lista de Clientes (Sincronizados con HomeScreen)
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
                 item {
                     ClientListCard(
-                        name = "Amanda Cifuentes",
-                        status = "Firma hoy",
-                        email = "amanda.cif@gmail.com",
+                        name = "Valeria Ramos", // Foto 1
+                        status = "Visita hoy",
+                        propertyInfo = "Busca en Zona 15", // Solo busca
                         date = "12 oct 2024",
                         imageRes = R.drawable.img_prospecto_1,
-                        bgColor = ColorFirmaHoy,
+                        bgColor = ColorVisitaHoy,
                         onClick = {
-                            // TODO: Navegar al perfil de Amanda
+                            // TODO: Navegar al perfil
                         }
                     )
                 }
                 item {
                     ClientListCard(
-                        name = "Anderson Souza",
-                        status = "Visita hoy",
-                        email = "ansouza@gmail.com",
+                        name = "Andrés Montero", // Foto 2
+                        status = "Entrega",
+                        propertyInfo = "Casa Zona 10", // Ya compró
                         date = "10 oct 2024",
                         imageRes = R.drawable.img_prospecto_2,
-                        bgColor = ColorVisitaHoy,
-                        onClick = { /* Acción futura */ }
-                    )
-                }
-                item {
-                    ClientListCard(
-                        name = "Ana Reyes",
-                        status = "Entrega",
-                        email = "ana.reyes@empresa.com",
-                        date = "08 oct 2024",
-                        imageRes = R.drawable.img_prospecto_3,
                         bgColor = ColorEntrega,
                         onClick = { /* Acción futura */ }
                     )
                 }
                 item {
                     ClientListCard(
-                        name = "Carlos Pérez",
+                        name = "Camila Silva", // Foto 3
+                        status = "Firma hoy",
+                        propertyInfo = "Apto. Zona 14", // Ya compró
+                        date = "08 oct 2024",
+                        imageRes = R.drawable.img_prospecto_3,
+                        bgColor = ColorFirmaHoy,
+                        onClick = { /* Acción futura */ }
+                    )
+                }
+                item {
+                    ClientListCard(
+                        name = "Roberto Mendoza", // Foto 4
                         status = "Seguimiento",
-                        email = "carlos.perez@gmail.com",
+                        propertyInfo = "Busca en Zona 16", // Solo busca
                         date = "05 oct 2024",
-                        imageRes = R.drawable.img_prospecto_2, // Reemplazar con otra imagen si tienes
+                        imageRes = R.drawable.img_prospecto_4,
                         bgColor = ColorSeguimiento,
+                        onClick = { /* Acción futura */ }
+                    )
+                }
+                item {
+                    ClientListCard(
+                        name = "José Morales", // Foto 5
+                        status = "Nuevo",
+                        propertyInfo = "Busca en Zona 4", // Solo busca
+                        date = "01 oct 2024",
+                        imageRes = R.drawable.img_prospecto_5,
+                        bgColor = ColorNuevo,
+                        onClick = { /* Acción futura */ }
+                    )
+                }
+                item {
+                    ClientListCard(
+                        name = "Luis de León", // Foto 6
+                        status = "Nuevo",
+                        propertyInfo = "Busca en Zona 10", // Solo busca
+                        date = "02 oct 2024",
+                        imageRes = R.drawable.img_prospecto_6,
+                        bgColor = ColorNuevo,
                         onClick = { /* Acción futura */ }
                     )
                 }
@@ -171,7 +199,7 @@ fun ClientsSearchBar() {
 
 @Composable
 fun ClientsFilterSection() {
-    // Definimos los filtros y sus colores correspondientes según el diseño
+    // Definimos los filtros y sus colores correspondientes
     val filters = listOf(
         Pair("Firma hoy", ColorFirmaHoy),
         Pair("Visita hoy", ColorVisitaHoy),
@@ -180,7 +208,6 @@ fun ClientsFilterSection() {
         Pair("Nuevo", ColorNuevo)
     )
 
-    // Dejamos un estado nulo para cuando no hay nada seleccionado, o 0 si quieres uno por defecto
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -211,7 +238,7 @@ fun ClientsFilterSection() {
 fun ClientListCard(
     name: String,
     status: String,
-    email: String,
+    propertyInfo: String,
     date: String,
     imageRes: Int,
     bgColor: Color,
@@ -242,7 +269,7 @@ fun ClientListCard(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Textos (Nombre, Status y Correo)
+            // Textos
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
 
@@ -252,32 +279,34 @@ fun ClientListCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
+                // Fila de la propiedad (Icono casita + Texto de zona/propiedad)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Email, contentDescription = "Email", tint = Color.White, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.Home, contentDescription = "Propiedad", tint = Color.White, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = email, fontSize = 12.sp, color = Color.White)
+                    Text(text = propertyInfo, fontSize = 12.sp, color = Color.White)
                 }
             }
 
-            // Columna Derecha: WhatsApp Arriba, Fecha Abajo
+            // Columna Derecha
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.height(64.dp)
             ) {
-                // Botón de WhatsApp
+                // Botón de WhatsApp ampliado a 40dp
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)), // Fondo sutil para que resalte sobre el color
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .clickable { /* Acción de WhatsApp */ },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.wsp_logo_1),
                         contentDescription = "WhatsApp",
-                        tint = Color.White, // WhatsApp en blanco
-                        modifier = Modifier.size(18.dp)
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp) // Icono un poco más grande
                     )
                 }
 
