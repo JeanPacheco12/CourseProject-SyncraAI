@@ -139,15 +139,14 @@ fun HeaderSection() {
                 }
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.img_perfil_agente),
+                    contentDescription = "Foto de Perfil",
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = "Perfil", tint = Color.White)
-                }
+                        .clip(CircleShape), // Esto hace que la imagen se recorte en forma de círculo
+                    contentScale = ContentScale.Crop // El Crop asegura que la foto llene todo el círculo sin aplastarse
+                )
             }
         }
 
