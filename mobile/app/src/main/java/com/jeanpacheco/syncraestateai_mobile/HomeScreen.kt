@@ -91,11 +91,12 @@ fun HomeScreen(navController: NavController) {
                 HeroCarouselSection()
                 Spacer(modifier = Modifier.height(32.dp))
                 ActivePropertiesSection()
-                Spacer(modifier = Modifier.height(32.dp)) // Espacio nuevo
-                ActiveProspectsSection() // NUEVA SECCIÓN
-                Spacer(modifier = Modifier.height(32.dp)) // Espacio nuevo
-                AgendaSection() // NUEVA SECCIÓN
-                Spacer(modifier = Modifier.height(100.dp)) // Espacio final para que no lo tape la barra inferior
+                Spacer(modifier = Modifier.height(32.dp))
+                ActiveProspectsSection()
+                Spacer(modifier = Modifier.height(32.dp))
+                AgendaSection()
+
+                Spacer(modifier = Modifier.height(24.dp)) // Reducido de 100.dp a 24.dp para un margen natural
             }
         }
     }
@@ -610,33 +611,55 @@ fun AgendaSection() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Usamos Column porque al estar dentro del scroll principal, un LazyColumn daría error
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            AgendaCard(
-                time = "09:00 - 10:00 AM",
-                dateTag = "Hoy",
-                clientName = "Alejandro Martínez",
-                location = "Zona 15, Cd. de Guatemala",
-                imageRes = R.drawable.propiedad_1
-            )
-            AgendaCard(
-                time = "03:00 - 04:00 PM",
-                dateTag = "Mañana",
-                clientName = "Sofía Castro",
-                location = "Zona 10, Cd. de Guatemala",
-                imageRes = R.drawable.propiedad_2
-            )
+        // Cambiamos de Column a LazyRow para que sea un carrusel horizontal
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            item {
+                AgendaCard(
+                    time = "09:00 - 10:00 AM",
+                    dateTag = "Hoy",
+                    clientName = "Alejandro Martínez",
+                    location = "Zona 15, Cd. de Guatemala",
+                    imageRes = R.drawable.propiedad_agenda_1
+                )
+            }
+            item {
+                AgendaCard(
+                    time = "11:30 - 12:30 PM",
+                    dateTag = "Hoy",
+                    clientName = "Sofía Castro",
+                    location = "Zona 10, Cd. de Guatemala",
+                    imageRes = R.drawable.propiedad_agenda_2
+                )
+            }
+            item {
+                AgendaCard(
+                    time = "02:00 - 03:00 PM",
+                    dateTag = "Mañana",
+                    clientName = "Carlos Ruiz",
+                    location = "Cayalá, Zona 16",
+                    imageRes = R.drawable.propiedad_agenda_3
+                )
+            }
+            item {
+                AgendaCard(
+                    time = "04:30 - 05:30 PM",
+                    dateTag = "Mañana",
+                    clientName = "Ana Reyes",
+                    location = "Carretera a El Salvador",
+                    imageRes = R.drawable.propiedad_agenda_4
+                )
+            }
         }
     }
 }
 
 // ==========================================
-// 2. REEMPLAZA TU AGENDA CARD (Totalmente rediseñada)
+// AGENDA CARD
 // ==========================================
 @Composable
 fun AgendaCard(time: String, dateTag: String, clientName: String, location: String, imageRes: Int) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.width(280.dp), // Agregamos ancho fijo para que no ocupe toda la pantalla
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceGray)
     ) {
@@ -662,7 +685,7 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(12.dp)
-                        .size(36.dp) // Un poco más grande para el nuevo formato
+                        .size(42.dp)
                         .clip(CircleShape)
                         .background(Color(0xFF25D366)),
                     contentAlignment = Alignment.Center
@@ -671,7 +694,7 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
                         painter = painterResource(id = R.drawable.wsp_logo_1),
                         contentDescription = "Contactar",
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(30.dp)
                     )
                 }
 
@@ -686,7 +709,7 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(SyncraPrimary.copy(alpha = 0.9f)) // Le puse un pelín de transparencia, se ve genial
+                            .background(SyncraPrimary.copy(alpha = 0.9f))
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
