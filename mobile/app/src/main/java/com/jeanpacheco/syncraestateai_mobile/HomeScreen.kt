@@ -1,6 +1,6 @@
 package com.jeanpacheco.syncraestateai_mobile
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,14 +19,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-// Colores de tu paleta Figma
+// ==========================================
+// PALETA DE COLORES (Basada en tu Figma)
+// ==========================================
 val SyncraPrimary = Color(0xFF234F68)
 val SyncraBackgroundShape = Color(0xFFA5B8C2)
 val TextGray = Color(0xFF7A8B94)
@@ -45,108 +47,115 @@ fun HomeScreen(navController: NavController) {
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. HEADER
-            HeaderSection()
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // ==========================================
+            // SECCIÓN SUPERIOR: FONDO CURVO + HEADER + BUSCADOR
+            // ==========================================
+            Box(modifier = Modifier.fillMaxWidth()) {
 
-            Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                // 2. BUSCADOR
-                SearchBarSection()
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // 3. CATEGORÍAS
-                CategoriesSection()
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // 4. CARRUSEL HERO
-                HeroCarouselSection()
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // 5. MIS PROPIEDADES ACTIVAS
-                ActivePropertiesSection()
-
-                Spacer(modifier = Modifier.height(40.dp))
-            }
-        }
-    }
-}
-
-// --- SUB-COMPONENTES ---
-
-@Composable
-fun HeaderSection() {
-    Box(modifier = Modifier.fillMaxWidth()) {
-
-        // Mancha de fondo segura
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .height(220.dp)
-                .clip(RoundedCornerShape(bottomEnd = 120.dp))
-                .background(SyncraBackgroundShape)
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 40.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // LOGO SEGURO (Solo texto por ahora para evitar crash)
-                Text(text = "SYNCRA", color = SyncraPrimary, fontSize = 20.sp, fontWeight = FontWeight.Black)
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .border(1.dp, Color(0xFF8DB049), CircleShape)
-                            .background(Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Icono campana tuyo (es ligero, no debería crashear)
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_campana),
-                            contentDescription = "Notificaciones",
-                            tint = SyncraPrimary,
-                            modifier = Modifier.size(24.dp)
+                // 1. EL FONDO CURVO
+                Canvas(modifier = Modifier.fillMaxWidth().height(310.dp)) {
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(size.width, 0f)
+                        lineTo(size.width, size.height * 0.85f)
+                        quadraticTo(
+                            size.width * 0.45f, size.height * 1.05f,
+                            0f, size.height * 0.35f
                         )
+                        close()
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    drawPath(path = path, color = SyncraBackgroundShape)
+                }
 
-                    // PERFIL SEGURO (Icono genérico en lugar de foto pesada)
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(Color.LightGray),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Person, contentDescription = "Perfil", tint = Color.White)
+                // 2. CONTENIDO SOBRE EL FONDO CURVO
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    HeaderSection()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                        SearchBarSection()
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row {
-                Text(text = "¡Hola, ", fontSize = 26.sp, color = SyncraPrimary)
-                Text(text = "Rodrigo!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+            // ==========================================
+            // SECCIÓN INFERIOR: CONTENIDO PRINCIPAL
+            // ==========================================
+            Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                CategoriesSection()
+                Spacer(modifier = Modifier.height(24.dp))
+                HeroCarouselSection()
+                Spacer(modifier = Modifier.height(32.dp))
+                ActivePropertiesSection()
+                Spacer(modifier = Modifier.height(40.dp))
             }
-            Text(
-                text = "Revisa tu agenda de hoy",
-                fontSize = 22.sp,
-                color = SyncraPrimary,
-                modifier = Modifier.padding(top = 4.dp)
-            )
         }
+    }
+}
+
+// ==========================================
+// SUB-COMPONENTES DESGLOSADOS
+// ==========================================
+
+@Composable
+fun HeaderSection() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            // CORRECCIÓN: Separamos el padding horizontal del top
+            .padding(horizontal = 24.dp)
+            .padding(top = 40.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "SYNCRA", color = SyncraPrimary, fontSize = 20.sp, fontWeight = FontWeight.Black)
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .border(1.dp, Color(0xFF8DB049), CircleShape)
+                        .background(Color.White, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_campana),
+                        contentDescription = "Notificaciones",
+                        tint = SyncraPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = "Perfil", tint = Color.White)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row {
+            Text(text = "¡Hola, ", fontSize = 26.sp, color = SyncraPrimary)
+            Text(text = "Rodrigo!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+        }
+        Text(
+            text = "Revisa tu agenda de hoy",
+            fontSize = 22.sp,
+            color = SyncraPrimary,
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
 
@@ -166,14 +175,13 @@ fun SearchBarSection() {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(end = 12.dp)
             ) {
-                Divider(
-                    color = Color.LightGray,
+                Box(
                     modifier = Modifier
                         .height(24.dp)
                         .width(1.dp)
+                        .background(Color.LightGray)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                // Micrófono tuyo (es ligero)
                 Icon(
                     painter = painterResource(id = R.drawable.ic_mic),
                     contentDescription = "Micrófono",
@@ -207,6 +215,7 @@ fun CategoriesSection() {
     ) {
         itemsIndexed(categories) { index, category ->
             val isSelected = index == selectedIndex
+
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
@@ -251,7 +260,6 @@ fun HeroCard(title: String, subtitle: String) {
             .width(280.dp)
             .height(180.dp)
             .clip(RoundedCornerShape(24.dp))
-            // FONDO SEGURO (Color sólido en lugar de imagen)
             .background(SyncraPrimary.copy(alpha = 0.8f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -268,7 +276,6 @@ fun HeroCard(title: String, subtitle: String) {
                 .background(SyncraPrimary),
             contentAlignment = Alignment.Center
         ) {
-            // Flecha tuya (es ligera)
             Icon(
                 painter = painterResource(id = R.drawable.ic_flecha),
                 contentDescription = "Ir",
@@ -326,7 +333,6 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
 
-                // FONDO SEGURO (Caja gris con ícono en lugar de imagen pesada)
                 Box(
                     modifier = Modifier.fillMaxSize().background(Color.LightGray),
                     contentAlignment = Alignment.Center
@@ -337,10 +343,19 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
                 Box(
                     modifier = Modifier
                         .padding(12.dp)
-                        .size(24.dp)
+                        .size(28.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF8DB049))
-                )
+                        .background(Color(0xFF8DB049)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Compartir",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -365,7 +380,6 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Ubicación tuya (es ligera)
                     Icon(
                         painter = painterResource(id = R.drawable.ic_ubicacion),
                         contentDescription = "Ubicación",
@@ -377,6 +391,7 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
+
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(text = price, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
                     Text(text = "/mes", fontSize = 12.sp, color = TextGray, modifier = Modifier.padding(bottom = 2.dp))
@@ -405,13 +420,13 @@ fun HomeBottomNavigationBar() {
         NavigationBarItem(
             icon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
             selected = false,
-            onClick = { /* Navegar */ },
+            onClick = { /* Navegar a buscador */ },
             colors = NavigationBarItemDefaults.colors(unselectedIconColor = SyncraPrimary)
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
             selected = false,
-            onClick = { /* Navegar */ },
+            onClick = { /* Navegar a perfil */ },
             colors = NavigationBarItemDefaults.colors(unselectedIconColor = SyncraPrimary)
         )
     }
