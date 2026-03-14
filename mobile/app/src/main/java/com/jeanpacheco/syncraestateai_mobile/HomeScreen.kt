@@ -56,7 +56,6 @@ fun HomeScreen(navController: NavController) {
             Box(modifier = Modifier.fillMaxWidth()) {
 
                 // 1. EL FONDO CURVO AJUSTADO A FIGMA
-                // Redujimos la altura a 240.dp para quitar el espacio en blanco sobrante
                 Canvas(modifier = Modifier.fillMaxWidth().height(240.dp)) {
                     val path = Path().apply {
                         moveTo(0f, 0f)
@@ -80,7 +79,6 @@ fun HomeScreen(navController: NavController) {
                 }
             }
 
-            // Espaciado sutil para separar el buscador de los botones
             Spacer(modifier = Modifier.height(20.dp))
 
             // ==========================================
@@ -118,7 +116,7 @@ fun HeaderSection() {
             Image(
                 painter = painterResource(id = R.drawable.logo_syncra),
                 contentDescription = "Logo Syncra",
-                modifier = Modifier.height(56.dp), // Aumentamos la altura (puedes subirlo a 64.dp si aún lo ves pequeño)
+                modifier = Modifier.height(56.dp),
                 contentScale = ContentScale.Fit
             )
 
@@ -144,8 +142,8 @@ fun HeaderSection() {
                     contentDescription = "Foto de Perfil",
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(CircleShape), // Esto hace que la imagen se recorte en forma de círculo
-                    contentScale = ContentScale.Crop // El Crop asegura que la foto llene todo el círculo sin aplastarse
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
             }
         }
@@ -269,34 +267,30 @@ fun HeroCard(title: String, subtitle: String, imageRes: Int) {
             .height(180.dp)
             .clip(RoundedCornerShape(24.dp))
     ) {
-        // 1. La imagen de fondo de la casa
         Image(
             painter = painterResource(id = imageRes),
             contentDescription = "Fondo Carrusel",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop // Asegura que la imagen llene la tarjeta sin deformarse
+            contentScale = ContentScale.Crop
         )
 
-        // 2. Filtro oscuro/azulado para que el texto blanco resalte (como en tu Figma)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SyncraPrimary.copy(alpha = 0.4f)) // 40% de opacidad de tu color primario
+                .background(SyncraPrimary.copy(alpha = 0.4f))
         )
 
-        // 3. Textos alineados al centro-izquierda
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.CenterStart)
-                .padding(bottom = 16.dp) // Un pequeño empuje hacia arriba para que no choque con el botón
+                .padding(bottom = 16.dp)
         ) {
             Text(text = title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 26.sp)
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = subtitle, color = Color.White, fontSize = 12.sp)
         }
 
-        // 4. El botón con la flecha (se queda igualito)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -329,23 +323,35 @@ fun ActivePropertiesSection() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 PropertyCard(
                     type = "Apartamento",
-                    title = "Apartamento Neo Zona 10",
+                    title = "Apartamento Vista Hermosa",
                     interested = 7,
-                    location = "Zona 10, Cd. de Guatemala",
-                    price = "Q. 8,500"
+                    location = "Zona 15, Cd. de Guatemala",
+                    price = "$1,200", // Precio ajustado a USD para Zona 15
+                    imageRes = R.drawable.propiedad_1
                 )
             }
             item {
                 PropertyCard(
-                    type = "Casa",
-                    title = "Casa Moderna Cayalá",
+                    type = "Apartamento",
+                    title = "Apartamento Neo Zona 10",
                     interested = 12,
-                    location = "Zona 16, Cd. de Guatemala",
-                    price = "Q. 15,000"
+                    location = "Zona 10, Cd. de Guatemala",
+                    price = "$1,500", // Precio ajustado a USD para Zona 10
+                    imageRes = R.drawable.propiedad_2
+                )
+            }
+            item {
+                PropertyCard(
+                    type = "Chalet",
+                    title = "Chalet en Monterrico",
+                    interested = 4,
+                    location = "Monterrico, Santa Rosa",
+                    price = "Q. 8,500", // Ajuste para un chalet mensual
+                    imageRes = R.drawable.propiedad_3
                 )
             }
         }
@@ -353,26 +359,53 @@ fun ActivePropertiesSection() {
 }
 
 @Composable
-fun PropertyCard(type: String, title: String, interested: Int, location: String, price: String) {
+fun PropertyCard(type: String, title: String, interested: Int, location: String, price: String, imageRes: Int) {
     Card(
-        modifier = Modifier.width(240.dp),
+        modifier = Modifier.width(350.dp), // Lo hice un poquitito más ancho (350.dp) para dar más espacio
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceGray)
     ) {
-        Column {
-            Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
-                Box(
-                    modifier = Modifier.fillMaxSize().background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Home, contentDescription = "Propiedad", tint = Color.Gray, modifier = Modifier.size(40.dp))
-                }
+            // ==========================================
+            // LADO IZQUIERDO: IMAGEN + ETIQUETA + BOTÓN COMPARTIR
+            // ==========================================
+            Box(
+                modifier = Modifier
+                    .width(130.dp)
+                    .height(150.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            ) {
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = "Propiedad",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
 
+                // Etiqueta de "Casa/Apartamento" sobre la imagen (Abajo Izquierda)
                 Box(
                     modifier = Modifier
-                        .padding(12.dp)
-                        .size(28.dp)
+                        .align(Alignment.BottomStart)
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SyncraPrimary.copy(alpha = 0.8f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(text = type, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                }
+
+                // Botón verde de Compartir (Arriba Izquierda)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(Color(0xFF8DB049)),
                     contentAlignment = Alignment.Center
@@ -384,52 +417,70 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
                         modifier = Modifier.size(16.dp)
                     )
                 }
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(12.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SyncraPrimary.copy(alpha = 0.8f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(text = type, color = Color.White, fontSize = 10.sp)
-                }
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary, maxLines = 1)
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(12.dp)) // Reduje un poco este espacio para darle más a los textos
+
+            // ==========================================
+            // LADO DERECHO: TEXTOS E ÍCONOS
+            // ==========================================
+            Column(
+                modifier = Modifier.fillMaxWidth(), // Toma todo el espacio restante
+                verticalArrangement = Arrangement.Center
+            ) {
+
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SyncraPrimary,
+                    maxLines = 2,
+                    lineHeight = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, contentDescription = "Interesados", modifier = Modifier.size(14.dp), tint = SyncraPrimary)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "$interested interesados", fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.SemiBold)
+                    Icon(Icons.Default.Person, contentDescription = "Interesados", modifier = Modifier.size(16.dp), tint = SyncraPrimary)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = "$interested interesados", fontSize = 13.sp, color = SyncraPrimary, fontWeight = FontWeight.SemiBold)
                 }
-                Spacer(modifier = Modifier.height(4.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    verticalAlignment = Alignment.Top, // Cambié a Top por si ocupa dos líneas
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_ubicacion),
                         contentDescription = "Ubicación",
-                        modifier = Modifier.size(14.dp),
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(top = 2.dp), // Ajuste fino para alinear con la primera línea del texto
                         tint = SyncraPrimary
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = location, fontSize = 12.sp, color = TextGray, maxLines = 1)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = location,
+                        fontSize = 13.sp,
+                        color = TextGray,
+                        maxLines = 2, // ¡Permite 2 líneas para que no se corte!
+                        lineHeight = 16.sp,
+                        modifier = Modifier.weight(1f) // Esto hace que el texto ocupe todo el ancho disponible y baje a la siguiente línea si es necesario
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(text = price, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
-                    Text(text = "/mes", fontSize = 12.sp, color = TextGray, modifier = Modifier.padding(bottom = 2.dp))
+                    Text(text = price, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = SyncraPrimary)
+                    Text(text = "/mes", fontSize = 12.sp, color = TextGray, modifier = Modifier.padding(bottom = 2.dp, start = 2.dp))
                 }
             }
         }
     }
 }
-
 @Composable
 fun HomeBottomNavigationBar() {
     NavigationBar(
