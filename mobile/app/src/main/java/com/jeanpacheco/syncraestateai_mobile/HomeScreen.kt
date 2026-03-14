@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.text.style.TextAlign
 
 // ==========================================
 // PALETA DE COLORES (Basada en tu Figma)
@@ -543,9 +544,15 @@ fun ActiveProspectsSection() {
     }
 }
 
+// ==========================================
+// PROSPECT ITEM
+// ==========================================
 @Composable
 fun ProspectItem(name: String, imageRes: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(76.dp) // Ancho fijo para que el espacio entre todos sea exacto siempre
+    ) {
         Image(
             painter = painterResource(id = imageRes),
             contentDescription = name,
@@ -555,7 +562,15 @@ fun ProspectItem(name: String, imageRes: Int) {
             contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = name, fontSize = 13.sp, color = SyncraPrimary, fontWeight = FontWeight.Medium)
+        Text(
+            text = name,
+            fontSize = 12.sp, // Un poco más pequeño para que quepa bien
+            color = SyncraPrimary,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center, // Centramos el texto
+            maxLines = 2, // Le damos permiso de usar 2 líneas si el nombre es largo
+            lineHeight = 14.sp
+        )
     }
 }
 
@@ -615,6 +630,9 @@ fun AgendaSection() {
     }
 }
 
+// ==========================================
+// 2. REEMPLAZA TU AGENDA CARD (Totalmente rediseñada)
+// ==========================================
 @Composable
 fun AgendaCard(time: String, dateTag: String, clientName: String, location: String, imageRes: Int) {
     Card(
@@ -622,18 +640,15 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceGray)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
 
-            // Lado izquierdo: Imagen + Icono WSP
+            // ==========================================
+            // PARTE SUPERIOR: Imagen completa + Overlays
+            // ==========================================
             Box(
                 modifier = Modifier
-                    .size(90.dp) // Tarjeta de imagen un poco más pequeña para diferenciarla
-                    .clip(RoundedCornerShape(16.dp))
+                    .fillMaxWidth()
+                    .height(180.dp) // Imagen grande, estilo Figma
             ) {
                 Image(
                     painter = painterResource(id = imageRes),
@@ -642,14 +657,14 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
                     contentScale = ContentScale.Crop
                 )
 
-                // Botón de WhatsApp encima de la imagen (Esquina superior derecha)
+                // Botón de WhatsApp (Esquina Superior Derecha)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(6.dp)
-                        .size(26.dp)
+                        .padding(12.dp)
+                        .size(36.dp) // Un poco más grande para el nuevo formato
                         .clip(CircleShape)
-                        .background(Color(0xFF25D366)), // Color verde de WhatsApp
+                        .background(Color(0xFF25D366)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -659,48 +674,69 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
                         modifier = Modifier.size(20.dp)
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Lado derecho: Información
-            Column(modifier = Modifier.fillMaxWidth()) {
-
-                // Fila 1: Hora y Etiqueta (Hoy/Mañana)
+                // Horario y Etiqueta (Esquina Inferior Izquierda)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = time, fontSize = 13.sp, color = SyncraPrimary, fontWeight = FontWeight.ExtraBold)
+                    // Fondo oscuro SyncraPrimary para la hora
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SyncraPrimary.copy(alpha = 0.9f)) // Le puse un pelín de transparencia, se ve genial
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = time,
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Etiqueta de "Hoy/Mañana"
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color(0xFF8DB049))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
                     ) {
-                        Text(text = dateTag, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(text = dateTag, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(10.dp))
+            // ==========================================
+            // PARTE INFERIOR: Información debajo de la imagen
+            // ==========================================
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = clientName,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SyncraPrimary
+                )
 
-                // Fila 2: Nombre
-                Text(text = clientName, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Fila 3: Ubicación
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_ubicacion),
                         contentDescription = "Ubicación",
-                        modifier = Modifier.size(14.dp),
+                        modifier = Modifier.size(16.dp),
                         tint = TextGray
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = location, fontSize = 13.sp, color = TextGray, maxLines = 1)
+                    Text(text = location, fontSize = 14.sp, color = TextGray, maxLines = 1)
                 }
             }
         }
