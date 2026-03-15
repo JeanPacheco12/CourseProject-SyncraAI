@@ -30,6 +30,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.draw.blur
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -210,23 +211,41 @@ fun SmartPitchSheetContent() {
         horizontalAlignment = Alignment.CenterHorizontally // Centra todo el contenido
     ) {
 
-        // 1. Logo de Gemini con Borde Neón
+        // 1. Logo de Gemini con Resplandor (Glow) Neón MEJORADO
         val geminiGradient = Brush.linearGradient(
-            colors = listOf(Color(0xFF4285F4), Color(0xFF9B72CB), Color(0xFFD96570)) // Azul, Morado, Rosado
+            colors = listOf(Color(0xFF4285F4), Color(0xFF9B72CB), Color(0xFFD96570))
         )
+
+        // Este es el gradiente radial para el resplandor de fondo
+        val glowGradient = Brush.radialGradient(
+            colors = listOf(
+                Color(0xFF9B72CB).copy(alpha = 0.8f), // Centro con color morado/rosado al 50%
+                Color.Transparent // Se difumina hacia transparente en los bordes
+            )
+        )
+
         Box(
             modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .border(2.dp, geminiGradient, CircleShape)
-                .padding(12.dp),
+                .size(90.dp) // Espacio total para el resplandor
+                .background(glowGradient, CircleShape), // El fondo difuminado
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_gemini),
-                contentDescription = "Gemini AI",
-                modifier = Modifier.fillMaxSize()
-            )
+            // El círculo blanco con el logo y su borde lineal
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(2.dp, geminiGradient, CircleShape)
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_gemini),
+                    contentDescription = "Gemini AI",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
