@@ -2,6 +2,8 @@ package com.jeanpacheco.syncraestateai_mobile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -26,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-@OptIn(ExperimentalMaterial3Api::class) // Agregamos esto por si acaso
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PropertyDetailScreen(navController: NavController) {
     val scrollState = rememberScrollState()
@@ -60,11 +62,11 @@ fun PropertyDetailScreen(navController: NavController) {
                     .padding(paddingValues)
                     .verticalScroll(scrollState)
             ) {
-                // 1. HEADER: Imagen principal con botones encima
+                // 1. HEADER: Imagen principal con botones y galería
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(300.dp)
+                        .height(350.dp) // Aumentamos un poco la altura para que respire más
                 ) {
                     // Imagen de la propiedad
                     Image(
@@ -73,6 +75,9 @@ fun PropertyDetailScreen(navController: NavController) {
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+
+                    // Overlay oscuro tenue para asegurar contraste de iconos (opcional)
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
 
                     // Fila superior con botones de regresar y compartir
                     Row(
@@ -101,6 +106,63 @@ fun PropertyDetailScreen(navController: NavController) {
                                 .size(40.dp)
                         ) {
                             Icon(Icons.Default.Share, contentDescription = "Compartir", tint = SyncraPrimary)
+                        }
+                    }
+
+                    // Elementos inferiores sobre la imagen (Tipo y Galería)
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        // Cuadro Tipo de Propiedad (Casa, Apto, etc.)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(SyncraPrimary) // Color 234F68
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(text = "Apartamento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                        }
+
+                        // Galería vertical a la derecha
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Miniatura 1
+                            Image(
+                                painter = painterResource(id = R.drawable.propiedad_agenda_1), // Idealmente otra imagen (ej: cocina)
+                                contentDescription = "Cocina",
+                                modifier = Modifier
+                                    .size(45.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            // Miniatura 2
+                            Image(
+                                painter = painterResource(id = R.drawable.propiedad_agenda_1), // Idealmente otra imagen (ej: baño)
+                                contentDescription = "Baño",
+                                modifier = Modifier
+                                    .size(45.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            // Miniatura +3
+                            Box(
+                                modifier = Modifier
+                                    .size(45.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color.Black.copy(alpha = 0.6f))
+                                    .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "+3", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
                         }
                     }
                 }
@@ -142,14 +204,14 @@ fun PropertyDetailScreen(navController: NavController) {
                             color = ColorVisitaHoy
                         )
 
-                        // Etiqueta Renta
+                        // Etiqueta Renta Agrandada (Color 8BC83F es casi igual a ColorVisitaHoy)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(ColorVisitaHoy.copy(alpha = 0.2f))
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .clip(RoundedCornerShape(12.dp)) // Bordes más redondeados
+                                .background(Color(0xFF8BC83F).copy(alpha = 0.2f))
+                                .padding(horizontal = 16.dp, vertical = 8.dp) // Padding aumentado
                         ) {
-                            Text(text = "Renta", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = ColorVisitaHoy)
+                            Text(text = "Renta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F)) // Texto más grande y bold
                         }
                     }
 
@@ -157,16 +219,23 @@ fun PropertyDetailScreen(navController: NavController) {
                     HorizontalDivider(color = SurfaceGray, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 3. CARACTERÍSTICAS (Habitaciones, Baños, Parqueos)
+                    // 3. CARACTERÍSTICAS (Carrusel Horizontal)
+                    val horizontalScrollState = rememberScrollState()
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(horizontalScrollState), // Habilitamos el scroll horizontal
+                        horizontalArrangement = Arrangement.spacedBy(16.dp) // Espacio entre tarjetas
                     ) {
-                        /* Nota: Si quieres usar tus propios iconos, cambia el 'icon' por un 'painterResource(id = R.drawable.tu_icono)'
-                           y ajusta el composable FeatureItem de abajo. */
-                        FeatureItem(title = "Habitaciones", value = "3")
-                        FeatureItem(title = "Baños", value = "2")
-                        FeatureItem(title = "Parqueos", value = "2")
+                        /* AQUÍ ESTÁN TUS ICONOS:
+                           En un proyecto real, reemplazarías 'R.drawable.ic_cama' por tus propios iconos
+                           exportados de Figma. Como no los tengo, dejo un espacio o uso iconos por defecto.
+                        */
+                        FeatureItem(title = "Habitaciones", value = "3", isIcon = false)
+                        FeatureItem(title = "Baños", value = "2", isIcon = false)
+                        FeatureItem(title = "Parqueos", value = "2", isIcon = false)
+                        FeatureItem(title = "Metraje", value = "120m²", isIcon = false) // Ejemplo de tarjeta extra
+                        FeatureItem(title = "Nivel", value = "4", isIcon = false)     // Ejemplo de tarjeta extra
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -203,6 +272,8 @@ fun PropertyDetailScreen(navController: NavController) {
                         AmenityItem(text = "Piscina climatizada")
                         AmenityItem(text = "Seguridad 24/7")
                         AmenityItem(text = "Área de coworking")
+                        AmenityItem(text = "Parqueo de visitas") // ¡Amenidad extra!
+                        AmenityItem(text = "Área de barbacoa (BBQ)") // ¡Amenidad extra!
                     }
 
                     Spacer(modifier = Modifier.height(32.dp)) // Espacio extra al final para que no lo tape el botón flotante
@@ -215,34 +286,50 @@ fun PropertyDetailScreen(navController: NavController) {
 // Sub-componentes para mantener el código ordenado
 
 @Composable
-fun FeatureItem(title: String, value: String) {
+fun FeatureItem(title: String, value: String, isIcon: Boolean = false, iconResId: Int? = null) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
             .background(SurfaceGray)
             .padding(16.dp)
-            .width(80.dp) // Ancho fijo para que se vean parejos
+            .widthIn(min = 80.dp) // Ancho mínimo para que se adapte si el texto es largo
     ) {
-        // Un círculo verde temporal en lugar de los iconos de camas/baños
+        // Círculo contenedor
         Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(40.dp) // Un poco más grande para los iconos
                 .clip(CircleShape)
-                .background(ColorVisitaHoy.copy(alpha = 0.2f)),
+                .background(Color(0xFF8BC83F).copy(alpha = 0.2f)), // Usando el verde solicitado
             contentAlignment = Alignment.Center
         ) {
-            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ColorVisitaHoy)
+            if (isIcon && iconResId != null) {
+                // Si tienes el ícono importado, se usaría esto:
+                Icon(
+                    painter = painterResource(id = iconResId),
+                    contentDescription = title,
+                    tint = Color(0xFF8BC83F),
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                // Si no hay ícono, mostramos el valor en texto
+                Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F))
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = title, fontSize = 12.sp, color = Color.Gray)
+        Text(text = title, fontSize = 12.sp, color = Color.Gray, maxLines = 1)
+
+        // Si usamos iconos, mostramos el valor debajo del titulo
+        if (isIcon) {
+            Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+        }
     }
 }
 
 @Composable
 fun AmenityItem(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = ColorVisitaHoy, modifier = Modifier.size(20.dp))
+        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF8BC83F), modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = text, fontSize = 14.sp, color = Color.DarkGray)
     }
