@@ -64,6 +64,11 @@ class MainActivity : ComponentActivity() {
                         composable("client_profile") {
                             ClientProfileScreen(navController = navController)
                         }
+
+                        // Ruta 7: Pantalla para detalles de propiedad.
+                        composable("detalle_propiedad") {
+                            PropertyDetailScreen(navController = navController)
+                        }
                     }
                 }
             }

@@ -158,7 +158,7 @@ fun ClientProfileScreen(navController: NavController) {
             // 6. Propiedad de Interés
             Text(text = "Propiedad de interés", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
-            PropertyOfInterestCard()
+            PropertyOfInterestCard(navController = navController)
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -357,12 +357,17 @@ fun ProfileDataField(label: String, value: String) {
     }
 }
 
+// Asegúrate de pasar el navController como parámetro
 @Composable
-fun PropertyOfInterestCard() {
+fun PropertyOfInterestCard(navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceGray)
+        colors = CardDefaults.cardColors(containerColor = SurfaceGray),
+        // ¡ESTO ES LO NUEVO! Le decimos que navegue al hacer clic
+        onClick = {
+            navController.navigate("detalle_propiedad")
+        }
     ) {
         Row(
             modifier = Modifier
