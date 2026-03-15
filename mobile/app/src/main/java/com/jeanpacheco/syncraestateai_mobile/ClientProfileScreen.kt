@@ -31,7 +31,7 @@ fun ClientProfileScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text("Perfil", fontWeight = FontWeight.Bold, color = SyncraPrimary, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -43,10 +43,10 @@ fun ClientProfileScreen(navController: NavController) {
                         Icon(Icons.Default.Share, contentDescription = "Compartir", tint = SyncraPrimary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                // También actualizamos los colores para que coincidan con el componente centrado
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
         }
-        // Eliminamos el FloatingActionButton del lápiz
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -87,13 +87,13 @@ fun ClientProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 3. Bloques de Información (Presupuesto, Zona, Inmueble)
+            // 3. Bloques de Información
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 InfoBlock(modifier = Modifier.weight(1f), label = "Presupuesto", value = "$120k-$150k")
-                InfoBlock(modifier = Modifier.weight(1f), label = "Zona", value = "Zona 15")
+                InfoBlock(modifier = Modifier.weight(1f), label = "Ubicación de interés", value = "Zona 15")
                 InfoBlock(modifier = Modifier.weight(1f), label = "Interés", value = "Apto.")
             }
 
@@ -126,7 +126,7 @@ fun ClientProfileScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
-                        .background(ColorVisitaHoy) // Verde limón que definimos antes
+                        .background(ColorVisitaHoy) // Verde limón
                         .padding(horizontal = 20.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -135,8 +135,46 @@ fun ClientProfileScreen(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // 5. Botón Mágico: Generar Smart Pitch con IA
+            // 5. Datos de perfil (Movido hacia arriba)
+            Text(
+                text = "Datos de perfil",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = SyncraPrimary,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileDataField(label = "Profesión / Ocupación", value = "Doctora")
+            Spacer(modifier = Modifier.height(12.dp))
+            ProfileDataField(label = "Nacionalidad", value = "Guatemalteca")
+            Spacer(modifier = Modifier.height(12.dp))
+            ProfileDataField(label = "Fecha de nacimiento", value = "15 junio 1990")
+
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 6. Propiedad de Interés (Tarjeta más grande)
+            Text(
+                text = "Propiedad de interés",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = SyncraPrimary,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PropertyOfInterestCard()
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 7. Botón Mágico: Generar Smart Pitch con IA
             Button(
                 onClick = { /* Acción IA */ },
                 modifier = Modifier
@@ -152,46 +190,6 @@ fun ClientProfileScreen(navController: NavController) {
                     color = Color.White
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 6. Propiedad de Interés
-            Text(
-                text = "Propiedad de interés",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = SyncraPrimary,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            PropertyOfInterestCard()
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 7. Datos de perfil
-            Text(
-                text = "Datos de perfil",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = SyncraPrimary,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileDataField(label = "Profesión / Ocupación", value = "Doctora")
-            Spacer(modifier = Modifier.height(12.dp))
-            ProfileDataField(label = "DPI / Pasaporte", value = "3014 54789 0101")
-            Spacer(modifier = Modifier.height(12.dp))
-            ProfileDataField(label = "Nacionalidad", value = "Guatemalteca")
-            Spacer(modifier = Modifier.height(12.dp))
-            ProfileDataField(label = "Fecha de nacimiento", value = "15 junio 1990")
 
             Spacer(modifier = Modifier.height(40.dp))
         }
@@ -211,7 +209,8 @@ fun InfoBlock(modifier: Modifier = Modifier, label: String, value: String) {
             .padding(vertical = 12.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = label, fontSize = 11.sp, color = Color.Gray, maxLines = 1)
+        // maxLines a 2 y textAlign al centro para que "Ubicación de interés" se vea bien
+        Text(text = label, fontSize = 11.sp, color = Color.Gray, maxLines = 2, textAlign = TextAlign.Center, lineHeight = 12.sp)
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary, maxLines = 1, textAlign = TextAlign.Center)
     }
@@ -234,6 +233,7 @@ fun ProfileDataField(label: String, value: String) {
 
 @Composable
 fun PropertyOfInterestCard() {
+    // Tarjeta con más presencia
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -241,35 +241,35 @@ fun PropertyOfInterestCard() {
     ) {
         Row(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(16.dp) // Más padding interno
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Imagen de la propiedad
+            // Imagen de la propiedad más grande
             Image(
-                painter = painterResource(id = R.drawable.propiedad_agenda_1), // Reemplazar si tienes otra imagen
+                painter = painterResource(id = R.drawable.propiedad_agenda_1),
                 contentDescription = "Propiedad",
                 modifier = Modifier
-                    .size(60.dp)
+                    .size(80.dp) // De 60dp pasó a 80dp
                     .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
-            // Textos de la propiedad
+            // Textos de la propiedad un poco más grandes
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Apartamento Vista Hermosa", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+                Text(text = "Apartamento Vista Hermosa", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Zona 15, Guatemala", fontSize = 12.sp, color = Color.Gray)
+                Text(text = "Zona 15, Guatemala", fontSize = 13.sp, color = Color.Gray)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "$135,000", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ColorVisitaHoy)
+                Text(text = "$135,000", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = ColorVisitaHoy)
             }
 
-            // Indicador de Estado (Círculo Verde)
+            // Indicador de Estado un poquito más visible
             Box(
                 modifier = Modifier
-                    .size(14.dp)
+                    .size(16.dp)
                     .clip(CircleShape)
                     .background(ColorVisitaHoy)
             )
