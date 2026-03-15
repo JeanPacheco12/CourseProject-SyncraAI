@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,7 +32,6 @@ import androidx.navigation.NavController
 fun PropertyDetailScreen(navController: NavController) {
     val scrollState = rememberScrollState()
 
-    // Usamos un Scaffold para poder dejar el botón de "Agendar Visita" fijo abajo
     Scaffold(
         bottomBar = {
             Box(
@@ -54,7 +52,7 @@ fun PropertyDetailScreen(navController: NavController) {
                 }
             }
         },
-        content = { paddingValues -> // Especificamos explícitamente el 'content'
+        content = { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -62,54 +60,57 @@ fun PropertyDetailScreen(navController: NavController) {
                     .padding(paddingValues)
                     .verticalScroll(scrollState)
             ) {
-                // 1. HEADER: Imagen principal con botones y galería
+                // Fila superior de botones
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Botón Regresar
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SurfaceGray)
+                            .size(44.dp)
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = SyncraPrimary)
+                    }
+
+                    // Botón Compartir
+                    IconButton(
+                        onClick = { /* Compartir */ },
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SurfaceGray)
+                            .size(44.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = "Compartir", tint = SyncraPrimary)
+                    }
+                }
+
+                // 1. HEADER: Imagen principal con galería
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(350.dp) // Aumentamos un poco la altura para que respire más
+                        .height(320.dp)
+                        .padding(horizontal = 16.dp)
                 ) {
-                    // Imagen de la propiedad
                     Image(
-                        painter = painterResource(id = R.drawable.propiedad_agenda_1), // Reemplaza con la imagen real de la propiedad
+                        painter = painterResource(id = R.drawable.propiedad_agenda_1),
                         contentDescription = "Imagen de la propiedad",
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(24.dp)),
                         contentScale = ContentScale.Crop
                     )
 
-                    // Overlay oscuro tenue para asegurar contraste de iconos (opcional)
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.Black.copy(alpha = 0.2f)))
 
-                    // Fila superior con botones de regresar y compartir
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp, start = 16.dp, end = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Botón Regresar
-                        IconButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.8f))
-                                .size(40.dp)
-                        ) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = SyncraPrimary)
-                        }
-
-                        // Botón Compartir
-                        IconButton(
-                            onClick = { /* Compartir */ },
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.8f))
-                                .size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = "Compartir", tint = SyncraPrimary)
-                        }
-                    }
-
-                    // Elementos inferiores sobre la imagen (Tipo y Galería)
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -118,23 +119,20 @@ fun PropertyDetailScreen(navController: NavController) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Bottom
                     ) {
-                        // Cuadro Tipo de Propiedad (Casa, Apto, etc.)
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(24.dp))
-                                .background(SyncraPrimary) // Color 234F68
+                                .background(SyncraPrimary)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Text(text = "Apartamento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White)
                         }
 
-                        // Galería vertical a la derecha
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Miniatura 1
                             Image(
-                                painter = painterResource(id = R.drawable.propiedad_agenda_1), // Idealmente otra imagen (ej: cocina)
+                                painter = painterResource(id = R.drawable.propiedad_agenda_1),
                                 contentDescription = "Cocina",
                                 modifier = Modifier
                                     .size(45.dp)
@@ -142,9 +140,8 @@ fun PropertyDetailScreen(navController: NavController) {
                                     .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop
                             )
-                            // Miniatura 2
                             Image(
-                                painter = painterResource(id = R.drawable.propiedad_agenda_1), // Idealmente otra imagen (ej: baño)
+                                painter = painterResource(id = R.drawable.propiedad_agenda_1),
                                 contentDescription = "Baño",
                                 modifier = Modifier
                                     .size(45.dp)
@@ -152,7 +149,6 @@ fun PropertyDetailScreen(navController: NavController) {
                                     .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop
                             )
-                            // Miniatura +3
                             Box(
                                 modifier = Modifier
                                     .size(45.dp)
@@ -173,7 +169,6 @@ fun PropertyDetailScreen(navController: NavController) {
                         .fillMaxWidth()
                         .padding(24.dp)
                 ) {
-                    // Título y Ubicación
                     Text(
                         text = "Apartamento Vista Hermosa",
                         fontSize = 24.sp,
@@ -191,7 +186,6 @@ fun PropertyDetailScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Precio y Etiqueta de Renta
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -204,14 +198,13 @@ fun PropertyDetailScreen(navController: NavController) {
                             color = ColorVisitaHoy
                         )
 
-                        // Etiqueta Renta Agrandada (Color 8BC83F es casi igual a ColorVisitaHoy)
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp)) // Bordes más redondeados
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFF8BC83F).copy(alpha = 0.2f))
-                                .padding(horizontal = 16.dp, vertical = 8.dp) // Padding aumentado
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            Text(text = "Renta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F)) // Texto más grande y bold
+                            Text(text = "Renta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F))
                         }
                     }
 
@@ -219,23 +212,19 @@ fun PropertyDetailScreen(navController: NavController) {
                     HorizontalDivider(color = SurfaceGray, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 3. CARACTERÍSTICAS (Carrusel Horizontal)
+                    // 3. CARACTERÍSTICAS (Carrusel Horizontal con TUS ÍCONOS)
                     val horizontalScrollState = rememberScrollState()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(horizontalScrollState), // Habilitamos el scroll horizontal
-                        horizontalArrangement = Arrangement.spacedBy(16.dp) // Espacio entre tarjetas
+                            .horizontalScroll(horizontalScrollState),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        /* AQUÍ ESTÁN TUS ICONOS:
-                           En un proyecto real, reemplazarías 'R.drawable.ic_cama' por tus propios iconos
-                           exportados de Figma. Como no los tengo, dejo un espacio o uso iconos por defecto.
-                        */
-                        FeatureItem(title = "Habitaciones", value = "3", isIcon = false)
-                        FeatureItem(title = "Baños", value = "2", isIcon = false)
-                        FeatureItem(title = "Parqueos", value = "2", isIcon = false)
-                        FeatureItem(title = "Metraje", value = "120m²", isIcon = false) // Ejemplo de tarjeta extra
-                        FeatureItem(title = "Nivel", value = "4", isIcon = false)     // Ejemplo de tarjeta extra
+                        FeatureItem(title = "Habitaciones", value = "3", iconResId = R.drawable.ic_cama)
+                        FeatureItem(title = "Baños", value = "2", iconResId = R.drawable.ic_bano)
+                        FeatureItem(title = "Parqueos", value = "2", iconResId = R.drawable.ic_carro)
+                        FeatureItem(title = "Metraje", value = "120m²", iconResId = R.drawable.ic_metraje)
+                        FeatureItem(title = "Nivel", value = "4", iconResId = R.drawable.ic_nivel)
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -272,57 +261,55 @@ fun PropertyDetailScreen(navController: NavController) {
                         AmenityItem(text = "Piscina climatizada")
                         AmenityItem(text = "Seguridad 24/7")
                         AmenityItem(text = "Área de coworking")
-                        AmenityItem(text = "Parqueo de visitas") // ¡Amenidad extra!
-                        AmenityItem(text = "Área de barbacoa (BBQ)") // ¡Amenidad extra!
+                        AmenityItem(text = "Parqueo de visitas")
+                        AmenityItem(text = "Área de barbacoa (BBQ)")
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp)) // Espacio extra al final para que no lo tape el botón flotante
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
-    ) // <-- Cierre del Scaffold
+    )
 }
 
-// Sub-componentes para mantener el código ordenado
+// Sub-componentes actualizados para usar tus recursos Drawables
 
 @Composable
-fun FeatureItem(title: String, value: String, isIcon: Boolean = false, iconResId: Int? = null) {
+fun FeatureItem(title: String, value: String, iconResId: Int) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(SurfaceGray)
-            .padding(16.dp)
-            .widthIn(min = 80.dp) // Ancho mínimo para que se adapte si el texto es largo
+            .padding(vertical = 16.dp, horizontal = 20.dp)
+            .widthIn(min = 70.dp) // Ancho mínimo
     ) {
-        // Círculo contenedor
+        // Círculo contenedor con tu Ícono
         Box(
             modifier = Modifier
-                .size(40.dp) // Un poco más grande para los iconos
+                .size(44.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF8BC83F).copy(alpha = 0.2f)), // Usando el verde solicitado
+                .background(Color(0xFF8BC83F).copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
-            if (isIcon && iconResId != null) {
-                // Si tienes el ícono importado, se usaría esto:
-                Icon(
-                    painter = painterResource(id = iconResId),
-                    contentDescription = title,
-                    tint = Color(0xFF8BC83F),
-                    modifier = Modifier.size(24.dp)
-                )
-            } else {
-                // Si no hay ícono, mostramos el valor en texto
-                Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F))
-            }
+            // AQUÍ usamos painterResource para leer tus archivos SVG
+            Icon(
+                painter = painterResource(id = iconResId),
+                contentDescription = title,
+                tint = Color(0xFF8BC83F), // Mantiene tu color verde
+                modifier = Modifier.size(24.dp)
+            )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = title, fontSize = 12.sp, color = Color.Gray, maxLines = 1)
 
-        // Si usamos iconos, mostramos el valor debajo del titulo
-        if (isIcon) {
-            Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
-        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Número en grande
+        Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Título en pequeño
+        Text(text = title, fontSize = 12.sp, color = Color.Gray, maxLines = 1)
     }
 }
 
