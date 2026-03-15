@@ -628,7 +628,7 @@ fun AgendaSection() {
                 AgendaCard(
                     time = "09:00 - 10:00 AM",
                     dateTag = "Hoy",
-                    clientName = "Alejandro Martínez",
+                    clientName = "Amanda Cifuentes",
                     location = "Zona 15, Cd. de Guatemala",
                     imageRes = R.drawable.propiedad_agenda_1
                 )
@@ -637,7 +637,7 @@ fun AgendaSection() {
                 AgendaCard(
                     time = "11:30 - 12:30 PM",
                     dateTag = "Hoy",
-                    clientName = "Sofía Castro",
+                    clientName = "Anderson Souza",
                     location = "Zona 10, Cd. de Guatemala",
                     imageRes = R.drawable.propiedad_agenda_2
                 )
@@ -646,7 +646,7 @@ fun AgendaSection() {
                 AgendaCard(
                     time = "02:00 - 03:00 PM",
                     dateTag = "Mañana",
-                    clientName = "Carlos Ruiz",
+                    clientName = "Ramiro Castillo",
                     location = "Cayalá, Zona 16",
                     imageRes = R.drawable.propiedad_agenda_3
                 )
@@ -655,8 +655,8 @@ fun AgendaSection() {
                 AgendaCard(
                     time = "04:30 - 05:30 PM",
                     dateTag = "Mañana",
-                    clientName = "Ana Reyes",
-                    location = "Carretera a El Salvador",
+                    clientName = "Luis de León",
+                    location = "Zona 10, Cd. de Guatemala",
                     imageRes = R.drawable.propiedad_agenda_4
                 )
             }

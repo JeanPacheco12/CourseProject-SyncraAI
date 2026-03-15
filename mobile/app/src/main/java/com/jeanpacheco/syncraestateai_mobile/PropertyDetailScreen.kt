@@ -3,6 +3,7 @@ package com.jeanpacheco.syncraestateai_mobile
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,9 +24,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+
+// Variable de colores
+private val IconBgGray = Color(0xFFF5F4F8)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,21 +39,44 @@ fun PropertyDetailScreen(navController: NavController) {
 
     Scaffold(
         bottomBar = {
-            Box(
+            // Cambiamos el Box por un Column para apilar el mensajito y el botón
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(24.dp)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Mensaje de autorización de gerencia
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "Autorizado",
+                        tint = ColorVisitaHoy,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Edición autorizada por gerencia",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                // Botón CTA actualizado
                 Button(
-                    onClick = { /* Acción para agendar visita */ },
+                    onClick = { /* Acción para ir a pantalla de edición */ },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SyncraPrimary),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Agendar visita", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Editar propiedad", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         },
@@ -67,7 +95,6 @@ fun PropertyDetailScreen(navController: NavController) {
                         .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Botón Regresar
                     IconButton(
                         onClick = { navController.popBackStack() },
                         modifier = Modifier
@@ -78,7 +105,6 @@ fun PropertyDetailScreen(navController: NavController) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = SyncraPrimary)
                     }
 
-                    // Botón Compartir
                     IconButton(
                         onClick = { /* Compartir */ },
                         modifier = Modifier
@@ -278,31 +304,54 @@ fun PropertyDetailScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Imagen del mapa (CAMBIADA por fondo_mapa)
-                    Image(
-                        painter = painterResource(id = R.drawable.fondo_mapa), // Reemplaza por tu mapa real cuando subas la imagen
-                        contentDescription = "Mapa de ubicación",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.LocationOn,
-                            contentDescription = "Pin",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(IconBgGray),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.LocationOn,
+                                contentDescription = "Pin de ubicación",
+                                tint = SyncraPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = "Bulevar Vista Hermosa II, Zona 15",
                             fontSize = 14.sp,
-                            color = Color.DarkGray
+                            color = Color.DarkGray,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { /* Acción para abrir Google Maps */ },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.fondo_mapa),
+                            contentDescription = "Mapa de ubicación",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .clip(RoundedCornerShape(16.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Ver mapa completo",
+                            fontSize = 12.sp,
+                            color = SyncraPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            textDecoration = TextDecoration.Underline
                         )
                     }
 
@@ -310,7 +359,7 @@ fun PropertyDetailScreen(navController: NavController) {
                     HorizontalDivider(color = SurfaceGray, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 7. MANTENIMIENTO (CAMBIADO con el recuadro gris)
+                    // 7. MANTENIMIENTO
                     Text(
                         text = "Mantenimiento",
                         fontSize = 18.sp,
@@ -319,7 +368,6 @@ fun PropertyDetailScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Este es el recuadro gris solicitado
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -336,15 +384,13 @@ fun PropertyDetailScreen(navController: NavController) {
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Includes security, water, and trash removal.",
+                                text = "*Cuota estimada que incluye seguridad, agua y extracción de basura.",
                                 fontSize = 14.sp,
-                                color = Color.Gray
+                                color = Color.Gray,
+                                lineHeight = 20.sp
                             )
                         }
                     }
-
-                    // Solo dejamos un respiro pequeño al final
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

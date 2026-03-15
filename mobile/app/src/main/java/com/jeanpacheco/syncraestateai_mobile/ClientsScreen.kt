@@ -91,7 +91,7 @@ fun ClientsScreen(navController: NavController) {
                 }
                 item {
                     ClientListCard(
-                        name = "Andrés Montero", // Foto 2
+                        name = "Anderson Souza", // Foto 2
                         status = "Entrega",
                         propertyInfo = "Casa Zona 10", // Ya compró
                         date = "10 oct 2024",
@@ -102,7 +102,7 @@ fun ClientsScreen(navController: NavController) {
                 }
                 item {
                     ClientListCard(
-                        name = "Camila Silva", // Foto 3
+                        name = "Ana Reyes", // Foto 3
                         status = "Firma hoy",
                         propertyInfo = "Apto. Zona 14", // Ya compró
                         date = "08 oct 2024",
@@ -113,7 +113,7 @@ fun ClientsScreen(navController: NavController) {
                 }
                 item {
                     ClientListCard(
-                        name = "Roberto Mendoza", // Foto 4
+                        name = "Ramiro Castillo", // Foto 4
                         status = "Seguimiento",
                         propertyInfo = "Busca en Zona 16", // Solo busca
                         date = "05 oct 2024",
@@ -124,7 +124,7 @@ fun ClientsScreen(navController: NavController) {
                 }
                 item {
                     ClientListCard(
-                        name = "José Morales", // Foto 5
+                        name = "Gustavo Ramos", // Foto 5
                         status = "Nuevo",
                         propertyInfo = "Busca en Zona 4", // Solo busca
                         date = "01 oct 2024",
