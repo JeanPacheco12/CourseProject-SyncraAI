@@ -2,6 +2,7 @@ package com.jeanpacheco.syncraestateai_mobile
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -11,16 +12,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -157,7 +163,7 @@ fun ClientProfileScreen(navController: NavController) {
 
             // 7. Botón Mágico: Generar Smart Pitch con IA
             Button(
-                onClick = { showPitchSheet = true }, // ¡AQUÍ ACTIVAMOS LA VENTANA EMERGENTE!
+                onClick = { showPitchSheet = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
@@ -179,9 +185,7 @@ fun ClientProfileScreen(navController: NavController) {
                 sheetState = sheetState,
                 containerColor = Color.White
             ) {
-                SmartPitchSheetContent(
-                    onClose = { showPitchSheet = false }
-                )
+                SmartPitchSheetContent()
             }
         }
     }
@@ -192,65 +196,94 @@ fun ClientProfileScreen(navController: NavController) {
 // ==========================================
 
 @Composable
-fun SmartPitchSheetContent(onClose: () -> Unit) {
+fun SmartPitchSheetContent() {
+    // Estado para el texto editable
+    var pitchText by remember {
+        mutableStateOf("Hola Valeria 👋, he analizado tus preferencias y vi que buscas en Zona 15. Creo que el Apartamento Vista Hermosa es ideal para ti. Por tu perfil como doctora, sus vías de acceso rápido a los hospitales principales te encantarán. ¿Te parece si agendamos una visita hoy mismo para que lo conozcas?")
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
-            .padding(bottom = 32.dp)
+            .padding(bottom = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally // Centra todo el contenido
     ) {
-        // Cabecera del Bottom Sheet
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+
+        // 1. Logo de Gemini con Borde Neón
+        val geminiGradient = Brush.linearGradient(
+            colors = listOf(Color(0xFF4285F4), Color(0xFF9B72CB), Color(0xFFD96570)) // Azul, Morado, Rosado
+        )
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .border(2.dp, geminiGradient, CircleShape)
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "✨ Smart Pitch generado",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = SyncraPrimary
+            Image(
+                painter = painterResource(id = R.drawable.logo_gemini),
+                contentDescription = "Gemini AI",
+                modifier = Modifier.fillMaxSize()
             )
-            IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.Gray)
-            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Caja de texto del Pitch
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(SurfaceGray)
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "Hola Valeria 👋, he analizado tus preferencias y vi que buscas en Zona 15. Creo que el Apartamento Vista Hermosa es ideal para ti. Por tu perfil como doctora, sus vías de acceso rápido a los hospitales principales te encantarán. ¿Te parece si agendamos una visita hoy mismo para que lo conozcas?",
-                fontSize = 15.sp,
-                color = Color.DarkGray,
-                lineHeight = 22.sp
-            )
-        }
+        // 2. Título Bicolor
+        Text(
+            text = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = SyncraPrimary)) {
+                    append("Smart Pitch ")
+                }
+                withStyle(style = SpanStyle(color = Color.Black)) {
+                    append("listo ✨")
+                }
+            },
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Botones de acción (Copiar y WhatsApp)
+        // 3. Área de Texto Editable (Más oscura)
+        val darkGrayBackground = Color(0xFFE8ECEF) // Un gris más oscuro para destacar
+
+        OutlinedTextField(
+            value = pitchText,
+            onValueChange = { pitchText = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 160.dp), // Altura mínima para que parezca un bloque de notas
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = darkGrayBackground,
+                unfocusedContainerColor = darkGrayBackground,
+                focusedBorderColor = Color.Transparent, // Sin borde, solo el fondo
+                unfocusedBorderColor = Color.Transparent,
+            ),
+            textStyle = LocalTextStyle.current.copy(fontSize = 15.sp, color = Color.DarkGray, lineHeight = 22.sp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 4. Botones de acción (Regenerar y WhatsApp)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Botón Copiar
-            OutlinedButton(
-                onClick = { /* Acción copiar al portapapeles */ },
+            // Botón Regenerar (Bucle)
+            IconButton(
+                onClick = { /* Acción regenerar mensaje */ },
                 modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = SyncraPrimary)
+                    .size(54.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(darkGrayBackground)
             ) {
-                Text("Copiar Pitch", fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Refresh, contentDescription = "Regenerar", tint = SyncraPrimary)
             }
 
             // Botón Enviar wsp
@@ -258,7 +291,7 @@ fun SmartPitchSheetContent(onClose: () -> Unit) {
                 onClick = { /* Acción enviar a wsp */ },
                 modifier = Modifier
                     .weight(1f)
-                    .height(50.dp),
+                    .height(54.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
             ) {
@@ -269,7 +302,7 @@ fun SmartPitchSheetContent(onClose: () -> Unit) {
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Enviar", fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Enviar por WhatsApp", fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
