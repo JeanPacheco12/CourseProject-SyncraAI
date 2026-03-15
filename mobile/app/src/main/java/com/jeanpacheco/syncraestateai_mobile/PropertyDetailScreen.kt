@@ -181,7 +181,7 @@ fun PropertyDetailScreen(navController: NavController) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.LocationOn, contentDescription = "Ubicación", tint = Color.Gray, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Zona 15, Ciudad de Guatemala", fontSize = 14.sp, color = Color.Gray)
+                        Text(text = "Vista Hermosa, Zona 15", fontSize = 14.sp, color = Color.Gray)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -212,7 +212,7 @@ fun PropertyDetailScreen(navController: NavController) {
                     HorizontalDivider(color = SurfaceGray, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 3. CARACTERÍSTICAS (Carrusel Horizontal con TUS ÍCONOS)
+                    // 3. CARACTERÍSTICAS
                     val horizontalScrollState = rememberScrollState()
                     Row(
                         modifier = Modifier
@@ -265,15 +265,93 @@ fun PropertyDetailScreen(navController: NavController) {
                         AmenityItem(text = "Área de barbacoa (BBQ)")
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+                    HorizontalDivider(color = SurfaceGray, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 6. UBICACIÓN
+                    Text(
+                        text = "Ubicación",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SyncraPrimary
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Imagen del mapa (CAMBIADA por fondo_mapa)
+                    Image(
+                        painter = painterResource(id = R.drawable.fondo_mapa), // Reemplaza por tu mapa real cuando subas la imagen
+                        contentDescription = "Mapa de ubicación",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .clip(RoundedCornerShape(16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = "Pin",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Bulevar Vista Hermosa II, Zona 15",
+                            fontSize = 14.sp,
+                            color = Color.DarkGray
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    HorizontalDivider(color = SurfaceGray, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 7. MANTENIMIENTO (CAMBIADO con el recuadro gris)
+                    Text(
+                        text = "Mantenimiento",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SyncraPrimary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Este es el recuadro gris solicitado
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SurfaceGray)
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "Q. 800 / mes",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.DarkGray
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Includes security, water, and trash removal.",
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+
+                    // Solo dejamos un respiro pequeño al final
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
     )
 }
 
-// Sub-componentes actualizados para usar tus recursos Drawables
-
+// Sub-componentes
 @Composable
 fun FeatureItem(title: String, value: String, iconResId: Int) {
     Column(
@@ -282,9 +360,8 @@ fun FeatureItem(title: String, value: String, iconResId: Int) {
             .clip(RoundedCornerShape(16.dp))
             .background(SurfaceGray)
             .padding(vertical = 16.dp, horizontal = 20.dp)
-            .widthIn(min = 70.dp) // Ancho mínimo
+            .widthIn(min = 70.dp)
     ) {
-        // Círculo contenedor con tu Ícono
         Box(
             modifier = Modifier
                 .size(44.dp)
@@ -292,23 +369,20 @@ fun FeatureItem(title: String, value: String, iconResId: Int) {
                 .background(Color(0xFF8BC83F).copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
-            // AQUÍ usamos painterResource para leer tus archivos SVG
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = title,
-                tint = Color(0xFF8BC83F), // Mantiene tu color verde
+                tint = Color(0xFF8BC83F),
                 modifier = Modifier.size(24.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Número en grande
         Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Título en pequeño
         Text(text = title, fontSize = 12.sp, color = Color.Gray, maxLines = 1)
     }
 }
