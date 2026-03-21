@@ -49,6 +49,10 @@ fun LoginScreen(navController: NavController) {
     // Salvavidas para teléfonos pequeños: permite hacer scroll hacia abajo si el teclado tapa cosas
     val scrollState = rememberScrollState()
 
+    // --- NUEVAS HERRAMIENTAS PARA FIREBASE ---
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+
     // CONTENEDOR PRINCIPAL: Ocupa todo y permite scroll
     Column(
         modifier = Modifier
@@ -196,8 +200,26 @@ fun LoginScreen(navController: NavController) {
             // --- BOTÓN PRINCIPAL: INGRESAR ---
             Button(
                 onClick = {
-                    // Por ahora, solo simula el error. Luego conectaremos esto con Firebase.
-                    navController.navigate("home_screen")
+                    // 1. Verificamos que no intenten entrar con los campos vacíos
+                    if (email.isNotEmpty() && password.isNotEmpty()) {
+                        showError = false // Ocultamos el error por si estaba visible
+
+                        // 2. Le pasamos el correo y contraseña a Firebase
+                        auth.signInWithEmailAndPassword(email, password)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    // ¡Entró! Mostramos un mensajito rápido y navegamos
+                                    android.widget.Toast.makeText(context, "¡Bienvenido agente! 🕵️‍♂️", android.widget.Toast.LENGTH_SHORT).show()
+                                    navController.navigate("home_screen")
+                                } else {
+                                    // Falló (mala contraseña o correo). Activamos tu banner de error.
+                                    showError = true
+                                }
+                            }
+                    } else {
+                        // Si dejaron algo vacío, mostramos el banner de error también
+                        showError = true
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
