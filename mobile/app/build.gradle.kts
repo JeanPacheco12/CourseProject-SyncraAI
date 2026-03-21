@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -55,4 +56,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     // Como Jetpack Compose no trae la herramienta de navegación por defecto, tuve que agregar esta librería para ejecutar esa función.
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    // Importar Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
+    // Declarar las librerías que usaremos en la Fase 4
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
 }
