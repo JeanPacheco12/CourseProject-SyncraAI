@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraGreen
+import androidx.core.net.toUri
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -291,7 +292,24 @@ fun LoginScreen(navController: NavController) {
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable {
-                        // TODO: Mandar a una pantalla de contacto o abrir un correo/WhatsApp
+                        try {
+                            // Preparamos los textos y los "codificamos" para que Gmail los entienda a la fuerza.
+                            val email = "soporte@syncraestate.com"
+                            val subject = android.net.Uri.encode("Solicitud de Soporte - Acceso a App")
+                            val body = android.net.Uri.encode("Hola equipo de soporte.\n\nSoy un agente de SyncraEstate y estoy teniendo problemas para acceder a mi cuenta desde la aplicación móvil. Por favor, solicito revisión de mis credenciales.\n\nGracias.")
+
+                            // Armamos el súper link con todo incrustado.
+                            val uriString = "mailto:$email?subject=$subject&body=$body"
+
+                            val intent = android.content.Intent(
+                                android.content.Intent.ACTION_SENDTO,
+                                uriString.toUri()
+                            )
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            // Si el celular no tiene app de correos
+                            android.widget.Toast.makeText(context, "No tienes una app de correo instalada ✉️", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     }
                 )
             }
