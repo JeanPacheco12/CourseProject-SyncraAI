@@ -146,6 +146,8 @@ fun LoginScreen(navController: NavController) {
                 shape = RoundedCornerShape(12.dp),
                 // Le quitamos el borde negro feo que trae por defecto y le ponemos nuestro verde al enfocar
                 colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black, // <-- Texto en negro al escribir
+                    unfocusedTextColor = Color.Black, // <-- Texto en negro al salir
                     unfocusedContainerColor = TextFieldBgColor,
                     focusedContainerColor = TextFieldBgColor,
                     unfocusedBorderColor = Color.Transparent,
@@ -174,6 +176,8 @@ fun LoginScreen(navController: NavController) {
                 // Aquí está la magia: si passwordVisible es false, ponle mascarilla (puntitos). Si es true, quítasela.
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black, // <-- Texto en negro al escribir
+                    unfocusedTextColor = Color.Black, // <-- Texto en negro al salir
                     unfocusedContainerColor = TextFieldBgColor,
                     focusedContainerColor = TextFieldBgColor,
                     unfocusedBorderColor = Color.Transparent,
