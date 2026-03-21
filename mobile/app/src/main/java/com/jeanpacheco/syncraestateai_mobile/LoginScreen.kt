@@ -258,7 +258,10 @@ fun LoginScreen(navController: NavController) {
 
             // --- BOTÓN SECUNDARIO: CONTINUAR CON GOOGLE ---
             OutlinedButton(
-                onClick = { /* TODO: Configurar Firebase Auth para Google Sign-In */ },
+                onClick = {
+                    // TODO: Pendiente de implementar el jueves. Por ahora mostramos un aviso amigable.
+                    android.widget.Toast.makeText(context, "Próximamente: Inicio de sesión con Google", android.widget.Toast.LENGTH_SHORT).show()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),
