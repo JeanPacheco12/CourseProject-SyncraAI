@@ -29,11 +29,18 @@ import androidx.navigation.NavController
 import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraGreen
 import androidx.core.net.toUri
 
+// Librerías para el funcionamiento de Continuar con Google.
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
+
 @Composable
 fun LoginScreen(navController: NavController) {
     // --- 1. MEMORIA DE LA PANTALLA (ESTADOS) ---
-    // Aquí guardamos lo que el usuario va tecleando.
-    // Si cambian, Compose redibuja la pantalla automáticamente.
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -44,15 +51,41 @@ fun LoginScreen(navController: NavController) {
     var showError by remember { mutableStateOf(false) }
 
     // --- 2. PALETA DE COLORES ---
-    val SyncraDarkBlue = Color(0xFF1F4C6B) // El azul oscuro elegante de nuestro diseño
-    val TextFieldBgColor = Color(0xFFF5F5F5) // El grisecito claro de las cajas de texto
+    val SyncraDarkBlue = Color(0xFF1F4C6B)
+    val TextFieldBgColor = Color(0xFFF5F5F5)
 
     // Salvavidas para teléfonos pequeños: permite hacer scroll hacia abajo si el teclado tapa cosas
     val scrollState = rememberScrollState()
 
-    // --- NUEVAS HERRAMIENTAS PARA FIREBASE ---
+    // --- HERRAMIENTAS PARA FIREBASE ---
     val context = androidx.compose.ui.platform.LocalContext.current
     val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+
+    // --- LANZADOR DE GOOGLE SIGN-IN ---
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                // Obtenemos el token de Google y se lo pasamos a Firebase
+                val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+                auth.signInWithCredential(credential)
+                    .addOnCompleteListener { authTask ->
+                        if (authTask.isSuccessful) {
+                            android.widget.Toast.makeText(context, "¡Bienvenido con Google!", android.widget.Toast.LENGTH_SHORT).show()
+                            navController.navigate("home_screen")
+                        } else {
+                            showError = true
+                        }
+                    }
+            } catch (e: ApiException) {
+                // Si el usuario cancela o hay error
+                showError = true
+            }
+        }
+    }
 
     // CONTENEDOR PRINCIPAL: Ocupa todo y permite scroll
     Column(
@@ -66,15 +99,15 @@ fun LoginScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(280.dp) // Altura generosa para que se vea el paisaje
+                .height(280.dp)
         ) {
             Image(
                 painter = painterResource(id = R.drawable.bg_login_header),
                 contentDescription = "Fondo Login",
-                contentScale = ContentScale.FillWidth, // Escala a lo ancho para no dejar huecos
+                contentScale = ContentScale.FillWidth,
                 modifier = Modifier
                     .fillMaxSize()
-                    .align(Alignment.BottomCenter) // Pegamos la imagen abajo para no cortar los arbolitos
+                    .align(Alignment.BottomCenter)
             )
         }
 
@@ -82,13 +115,12 @@ fun LoginScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp) // Margen a los lados para respirar
+                .padding(horizontal = 24.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Textos de Bienvenida (El truco de los dos colores)
+            // Textos de Bienvenida
             Text(
-                // buildAnnotatedString nos deja pintar pedacitos de texto de diferente color
                 text = buildAnnotatedString {
                     withStyle(style = SpanStyle(color = Color.Black)) {
                         append("Vamos a ")
@@ -111,8 +143,7 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- BANNER DE ERROR (DENTRO DEL CONDICIONAL) ---
-            // Solo se dibuja en la pantalla si showError es 'true'
+            // --- BANNER DE ERROR ---
             if (showError) {
                 Box(
                     modifier = Modifier
@@ -132,9 +163,8 @@ fun LoginScreen(navController: NavController) {
             // --- INPUT 1: CORREO ELECTRÓNICO ---
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it }, // Actualiza la variable 'email' en tiempo real
+                onValueChange = { email = it },
                 label = { Text("Correo electrónico", color = Color.Gray) },
-                // Ponemos el ícono de sobrecito de Material Design a la izquierda
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Email,
@@ -144,16 +174,15 @@ fun LoginScreen(navController: NavController) {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                // Le quitamos el borde negro feo que trae por defecto y le ponemos nuestro verde al enfocar
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.Black, // <-- Texto en negro al escribir
-                    unfocusedTextColor = Color.Black, // <-- Texto en negro al salir
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
                     unfocusedContainerColor = TextFieldBgColor,
                     focusedContainerColor = TextFieldBgColor,
                     unfocusedBorderColor = Color.Transparent,
                     focusedBorderColor = SyncraGreen
                 ),
-                singleLine = true // Evita que den "Enter" y se haga gigante el campo
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -163,7 +192,6 @@ fun LoginScreen(navController: NavController) {
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Contraseña", color = Color.Gray) },
-                // Ponemos el ícono del candado
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Lock,
@@ -173,11 +201,10 @@ fun LoginScreen(navController: NavController) {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                // Aquí está la magia: si passwordVisible es false, ponle mascarilla (puntitos). Si es true, quítasela.
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.Black, // <-- Texto en negro al escribir
-                    unfocusedTextColor = Color.Black, // <-- Texto en negro al salir
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
                     unfocusedContainerColor = TextFieldBgColor,
                     focusedContainerColor = TextFieldBgColor,
                     unfocusedBorderColor = Color.Transparent,
@@ -188,9 +215,8 @@ fun LoginScreen(navController: NavController) {
 
             // BOTÓN TEXTO: "Mostrar/Ocultar contraseña"
             TextButton(
-                // Al hacer clic, invierte el valor (si era true, se hace false y viceversa)
                 onClick = { passwordVisible = !passwordVisible },
-                modifier = Modifier.align(Alignment.End) // Alineado a la derecha
+                modifier = Modifier.align(Alignment.End)
             ) {
                 Text(
                     text = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
@@ -205,30 +231,24 @@ fun LoginScreen(navController: NavController) {
             // --- BOTÓN PRINCIPAL: INGRESAR ---
             Button(
                 onClick = {
-                    // 1. Verificamos que no intenten entrar con los campos vacíos
                     if (email.isNotEmpty() && password.isNotEmpty()) {
-                        showError = false // Ocultamos el error por si estaba visible
-
-                        // 2. Le pasamos el correo y contraseña a Firebase
+                        showError = false
                         auth.signInWithEmailAndPassword(email, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
-                                    // ¡Entró! Mostramos un mensajito rápido y navegamos
                                     android.widget.Toast.makeText(context, "¡Bienvenido agente!", android.widget.Toast.LENGTH_SHORT).show()
                                     navController.navigate("home_screen")
                                 } else {
-                                    // Falló (mala contraseña o correo). Activamos tu banner de error.
                                     showError = true
                                 }
                             }
                     } else {
-                        // Si dejaron algo vacío, mostramos el banner de error también
                         showError = true
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp), // Botón bien grueso y fácil de presionar
+                    .height(60.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SyncraGreen)
             ) {
@@ -263,8 +283,18 @@ fun LoginScreen(navController: NavController) {
             // --- BOTÓN SECUNDARIO: CONTINUAR CON GOOGLE ---
             OutlinedButton(
                 onClick = {
-                    // TODO: Pendiente de implementar el jueves. Por ahora mostramos un aviso amigable.
-                    android.widget.Toast.makeText(context, "Próximamente: Inicio de sesión con Google", android.widget.Toast.LENGTH_SHORT).show()
+                    showError = false
+                    // 1. Configuramos qué le vamos a pedir a Google (el correo y el ID del usuario)
+                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken("228214220825-5djom5v4gjkqsv0ufib6nddjegbao8dv.apps.googleusercontent.com")
+                        .requestEmail()
+                        .build()
+
+                    // 2. Preparamos el cliente
+                    val googleSignInClient = GoogleSignIn.getClient(context, gso)
+
+                    // 3. ¡Lanzamos la ventanita de Google!
+                    googleSignInLauncher.launch(googleSignInClient.signInIntent)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -300,12 +330,10 @@ fun LoginScreen(navController: NavController) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable {
                         try {
-                            // Preparamos los textos y los "codificamos" para que Gmail los entienda a la fuerza.
                             val email = "soporte@syncraestate.com"
                             val subject = android.net.Uri.encode("Solicitud de Soporte - Acceso a App")
                             val body = android.net.Uri.encode("Hola equipo de soporte.\n\nSoy un agente de SyncraEstate y estoy teniendo problemas para acceder a mi cuenta desde la aplicación móvil. Por favor, solicito revisión de mis credenciales.\n\nGracias.")
 
-                            // Armamos el súper link con todo incrustado.
                             val uriString = "mailto:$email?subject=$subject&body=$body"
 
                             val intent = android.content.Intent(
@@ -314,7 +342,6 @@ fun LoginScreen(navController: NavController) {
                             )
                             context.startActivity(intent)
                         } catch (e: Exception) {
-                            // Si el celular no tiene app de correos
                             android.widget.Toast.makeText(context, "No tienes una app de correo instalada ✉️", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }

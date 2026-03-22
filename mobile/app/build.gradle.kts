@@ -61,4 +61,6 @@ dependencies {
     // Declarar las librerías que usaremos en la Fase 4
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    // Implementación para el funcionamiento del botón de Continuar con Google en LoginScreen
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
 }
