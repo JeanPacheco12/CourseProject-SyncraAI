@@ -146,7 +146,12 @@ fun HomeScreen(navController: NavController) {
             Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                 CategoriesSection()
                 Spacer(modifier = Modifier.height(24.dp))
-                HeroCarouselSection()
+                // --- ACTUALIZADO: Pasamos lo necesario para la navegación y el scroll ---
+                HeroCarouselSection(
+                    navController = navController,
+                    scrollState = scrollState,
+                    coroutineScope = coroutineScope
+                )
                 Spacer(modifier = Modifier.height(32.dp))
                 // AHORA LE PASAMOS EL NAVCONTROLLER Y EL BUSCADOR
                 ActivePropertiesSection(navController = navController, searchQuery = globalSearchQuery)
@@ -440,33 +445,47 @@ fun CategoriesSection() {
 }
 
 @Composable
-fun HeroCarouselSection() {
+fun HeroCarouselSection(
+    navController: NavController,
+    scrollState: androidx.compose.foundation.ScrollState,
+    coroutineScope: kotlinx.coroutines.CoroutineScope
+) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             HeroCard(
                 title = "Resumen del\ndía",
                 subtitle = "¡Tienes 3 citas programadas para hoy!",
-                imageRes = R.drawable.img_carrusel_1
+                imageRes = R.drawable.img_carrusel_1,
+                onClick = {
+                    // Acción: Hace scroll hacia abajo (1200 píxeles aprox. para llegar a Agenda)
+                    // Nota: 1200 es un valor estimado, lo ajustaremos si es necesario
+                    coroutineScope.launch { scrollState.animateScrollTo(1200) }
+                }
             )
         }
         item {
             HeroCard(
                 title = "Nuevos\nProspectos",
-                subtitle = "Tienes 5 mensajes sin leer.",
-                imageRes = R.drawable.img_carrusel_2
+                // Texto actualizado para ser más realista y acorde a usar WhatsApp
+                subtitle = "Tienes 5 prospectos por contactar.",
+                imageRes = R.drawable.img_carrusel_2,
+                onClick = {
+                    // Acción: Navega a la pantalla de clientes
+                    navController.navigate("clients")
+                }
             )
         }
     }
 }
 
 @Composable
-fun HeroCard(title: String, subtitle: String, imageRes: Int) {
+fun HeroCard(title: String, subtitle: String, imageRes: Int, onClick: () -> Unit) { // <-- Agregamos onClick
     Box(
         modifier = Modifier
             .width(280.dp)
             .height(180.dp)
             .clip(RoundedCornerShape(24.dp))
-            .clickable { /* Acción carrusel */ }
+            .clickable { onClick() } // <-- Conectamos el clic de la tarjeta completa
     ) {
         Image(
             painter = painterResource(id = imageRes),
@@ -488,7 +507,8 @@ fun HeroCard(title: String, subtitle: String, imageRes: Int) {
                 .align(Alignment.BottomStart)
                 .size(70.dp, 50.dp)
                 .clip(RoundedCornerShape(topEnd = 24.dp))
-                .background(SyncraPrimary),
+                .background(SyncraPrimary)
+                .clickable { onClick() }, // <-- Aseguramos que el botón de la flecha también funcione
             contentAlignment = Alignment.Center
         ) {
             Icon(
