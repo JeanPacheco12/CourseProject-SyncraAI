@@ -516,7 +516,12 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String) {
                     title = document.getString("title") ?: "Sin título",
                     price = document.getLong("price") ?: 0L,
                     location = document.getString("location") ?: "Sin ubicación",
-                    interested = document.getLong("interested")?.toInt() ?: 0
+                    interested = document.getLong("interested")?.toInt() ?: 0,
+                    // --- AQUÍ ESTÁ LA SOLUCIÓN DEL PASO 1 ---
+                    // Ahora jalamos el tipo (Casa, Cabaña, Terreno) directamente de Firestore
+                    type = document.getString("type") ?: "Propiedad",
+                    // Dejamos una imagen por defecto para evitar errores (si tu data class lo requiere)
+                    imageRes = R.drawable.img_carrusel_1
                 ))
             }
             propertiesList = list
@@ -562,7 +567,7 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String) {
                 items(filteredProperties) { prop ->
                     val precioConComas = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(prop.price)
                     PropertyCard(
-                        type = prop.type,
+                        type = prop.type, // ¡Ahora pasará "Cabaña" o "Apartamento" dinámicamente!
                         title = prop.title,
                         interested = prop.interested,
                         location = prop.location,
