@@ -58,6 +58,8 @@ val SurfaceGray = Color(0xFFF4F6F9)
 fun HomeScreen(navController: NavController) {
     // --- NUEVO: ESTADO GLOBAL PARA EL BUSCADOR ---
     var globalSearchQuery by remember { mutableStateOf("") }
+    // --- NUEVO: ESTADO PARA LA CATEGORÍA SELECCIONADA ---
+    var selectedCategory by remember { mutableStateOf("Todas") }
     // --- NUEVO: ESTADO PARA NOTIFICACIONES ---
     var showNotifications by remember { mutableStateOf(false) }
 
@@ -144,17 +146,24 @@ fun HomeScreen(navController: NavController) {
             // SECCIÓN INFERIOR: CONTENIDO PRINCIPAL
             // ==========================================
             Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                CategoriesSection()
+                // ACTUALIZADO: Pasamos el estado y la función para cambiarlo
+                CategoriesSection(
+                    selectedCategory = selectedCategory,
+                    onCategorySelected = { selectedCategory = it }
+                )
                 Spacer(modifier = Modifier.height(24.dp))
-                // --- ACTUALIZADO: Pasamos lo necesario para la navegación y el scroll ---
                 HeroCarouselSection(
                     navController = navController,
                     scrollState = scrollState,
                     coroutineScope = coroutineScope
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                // AHORA LE PASAMOS EL NAVCONTROLLER Y EL BUSCADOR
-                ActivePropertiesSection(navController = navController, searchQuery = globalSearchQuery)
+                // ACTUALIZADO: Le pasamos la categoría seleccionada para que filtre
+                ActivePropertiesSection(
+                    navController = navController,
+                    searchQuery = globalSearchQuery,
+                    selectedCategory = selectedCategory
+                )
                 Spacer(modifier = Modifier.height(32.dp))
 
                 ActiveProspectsSection(navController = navController, searchQuery = globalSearchQuery) // <-- NUEVO
@@ -414,22 +423,21 @@ fun SearchBarSection(
 }
 
 @Composable
-fun CategoriesSection() {
+fun CategoriesSection(selectedCategory: String, onCategorySelected: (String) -> Unit) {
     val categories = listOf("Todas", "Pendientes", "Visitas", "Cerradas")
-    var selectedIndex by remember { mutableStateOf(0) }
 
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        itemsIndexed(categories) { index, category ->
-            val isSelected = index == selectedIndex
+        items(categories) { category ->
+            val isSelected = category == selectedCategory
 
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
                     .background(if (isSelected) SyncraPrimary else SurfaceGray)
-                    .clickable { selectedIndex = index }
+                    .clickable { onCategorySelected(category) } // <-- Avisa a HomeScreen del cambio
                     .padding(horizontal = 24.dp, vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -522,7 +530,7 @@ fun HeroCard(title: String, subtitle: String, imageRes: Int, onClick: () -> Unit
 }
 
 @Composable
-fun ActivePropertiesSection(navController: NavController, searchQuery: String) {
+fun ActivePropertiesSection(navController: NavController, searchQuery: String, selectedCategory: String) {
     var propertiesList by remember { mutableStateOf<List<Property>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -537,10 +545,9 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String) {
                     price = document.getLong("price") ?: 0L,
                     location = document.getString("location") ?: "Sin ubicación",
                     interested = document.getLong("interested")?.toInt() ?: 0,
-                    // --- AQUÍ ESTÁ LA SOLUCIÓN DEL PASO 1 ---
-                    // Ahora jalamos el tipo (Casa, Cabaña, Terreno) directamente de Firestore
                     type = document.getString("type") ?: "Propiedad",
-                    // Dejamos una imagen por defecto para evitar errores (si tu data class lo requiere)
+                    // --- NUEVO: Extraemos el status de Firebase ---
+                    status = document.getString("status") ?: "Todas",
                     imageRes = R.drawable.img_carrusel_1
                 ))
             }
@@ -549,14 +556,17 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String) {
         }.addOnFailureListener { isLoading = false }
     }
 
-    // --- AQUÍ ESTÁ LA MAGIA DEL FILTRO ---
-    val filteredProperties = if (searchQuery.isBlank()) {
-        propertiesList
-    } else {
-        propertiesList.filter { prop ->
+    // --- FILTRO DOBLE: BUSCADOR + CATEGORÍA ---
+    val filteredProperties = propertiesList.filter { prop ->
+        val matchesSearch = if (searchQuery.isBlank()) true else {
             prop.title.contains(searchQuery, ignoreCase = true) ||
                     prop.location.contains(searchQuery, ignoreCase = true)
         }
+        val matchesCategory = if (selectedCategory == "Todas") true else {
+            // Comparamos ignorando mayúsculas/minúsculas por si en Firebase está como "pendientes"
+            prop.status.equals(selectedCategory, ignoreCase = true)
+        }
+        matchesSearch && matchesCategory
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -580,14 +590,13 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String) {
         if (isLoading) {
             Text(text = "Descargando propiedades...", color = TextGray, modifier = Modifier.padding(16.dp))
         } else if (filteredProperties.isEmpty()) {
-            Text(text = "No se encontraron propiedades", color = TextGray, modifier = Modifier.padding(16.dp))
+            Text(text = "No hay propiedades en '$selectedCategory'", color = TextGray, modifier = Modifier.padding(16.dp))
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                // AQUÍ USAMOS LA LISTA FILTRADA
                 items(filteredProperties) { prop ->
                     val precioConComas = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(prop.price)
                     PropertyCard(
-                        type = prop.type, // ¡Ahora pasará "Cabaña" o "Apartamento" dinámicamente!
+                        type = prop.type,
                         title = prop.title,
                         interested = prop.interested,
                         location = prop.location,
@@ -830,7 +839,8 @@ data class Property(
     val location: String = "",
     val type: String = "Casa",
     val interested: Int = 5,
-    val imageRes: Int = R.drawable.propiedad_1
+    val imageRes: Int = R.drawable.propiedad_1,
+    val status: String // <-- ¡NUEVO CAMPO!
 )
 
 data class NotificationData(
