@@ -69,6 +69,11 @@ class MainActivity : ComponentActivity() {
                         composable("detalle_propiedad") {
                             PropertyDetailScreen(navController = navController)
                         }
+
+                        // Ruta 8: Pantalla para el perfil del agente.
+                        composable("agent_profile") {
+                            AgentProfileScreen(navController = navController)
+                        }
                     }
                 }
             }
