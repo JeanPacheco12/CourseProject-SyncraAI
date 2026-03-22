@@ -34,6 +34,12 @@ import androidx.compose.material.icons.automirrored.filled.Send // Por si lo nec
 // Imports para que funcione Firebase
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.foundation.lazy.items
+// Imports para funcionalidades del micrófono.
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 
 // ==========================================
@@ -304,7 +310,21 @@ fun HeaderSection(onBellClick: () -> Unit, onProfileClick: () -> Unit) {
 @Composable
 fun SearchBarSection() {
     var searchQuery by remember { mutableStateOf("") }
-    val context = LocalContext.current // Para el Toast del mic
+    val context = LocalContext.current
+
+    // 1. EL "ATRAPADOR" DEL RESULTADO DE VOZ
+    // Esto se queda esperando a que Google termine de escuchar y nos devuelva el texto
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = results?.get(0) ?: ""
+            // ¡Magia! Ponemos lo que escuchó en la barra de búsqueda
+            searchQuery = spokenText
+        }
+    }
 
     OutlinedTextField(
         value = searchQuery,
@@ -326,13 +346,29 @@ fun SearchBarSection() {
                     tint = Color.Gray,
                     modifier = Modifier
                         .size(24.dp)
-                        .clickable { Toast.makeText(context, "Escuchando...", Toast.LENGTH_SHORT).show() }
+                        .clickable {
+                            // 2. LANZAMOS EL RECONOCEDOR DE VOZ DE GOOGLE
+                            try {
+                                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                    // Le configuramos el español de Guatemala para que entienda bien el acento
+                                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-GT")
+                                    putExtra(RecognizerIntent.EXTRA_PROMPT, "Dime qué estás buscando...")
+                                }
+                                speechRecognizerLauncher.launch(intent)
+                            } catch (e: Exception) {
+                                // Por si lo prueban en un teléfono viejito o un emulador sin Google
+                                Toast.makeText(context, "Tu dispositivo no soporta dictado por voz", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                 )
             }
         },
         modifier = Modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = SyncraPrimary, // <-- EL COLOR DEL TEXTO AL ESCRIBIR
+            unfocusedTextColor = SyncraPrimary, // <-- EL COLOR DEL TEXTO CUANDO NO ESTÁ SELECCIONADO
             unfocusedContainerColor = SurfaceGray,
             focusedContainerColor = SurfaceGray,
             unfocusedBorderColor = Color.Transparent,
