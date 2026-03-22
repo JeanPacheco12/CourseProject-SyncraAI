@@ -127,10 +127,11 @@ fun HomeScreen(navController: NavController) {
                 // AHORA LE PASAMOS EL NAVCONTROLLER Y EL BUSCADOR
                 ActivePropertiesSection(navController = navController, searchQuery = globalSearchQuery)
                 Spacer(modifier = Modifier.height(32.dp))
-                ActiveProspectsSection(navController = navController)
 
+                ActiveProspectsSection(navController = navController, searchQuery = globalSearchQuery) // <-- NUEVO
                 Spacer(modifier = Modifier.height(32.dp))
-                AgendaSection()
+
+                AgendaSection(searchQuery = globalSearchQuery)
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -611,7 +612,25 @@ fun HomeBottomNavigationBar(navController: NavController) {
 // SECCIÓN DE CLIENTES ACTIVOS
 // ==========================================
 @Composable
-fun ActiveProspectsSection(navController: NavController) {
+fun ActiveProspectsSection(navController: NavController, searchQuery: String) {
+    // 1. Creamos la lista de prospectos
+    val allProspects = listOf(
+        Pair("Amanda Cifuentes", R.drawable.img_prospecto_1),
+        Pair("Anderson Souza", R.drawable.img_prospecto_2),
+        Pair("Ana Reyes", R.drawable.img_prospecto_3),
+        Pair("Ramiro Castillo", R.drawable.img_prospecto_4),
+        Pair("Gustavo Ramos", R.drawable.img_prospecto_5)
+    )
+
+    // 2. Aplicamos el filtro mágico
+    val filteredProspects = if (searchQuery.isBlank()) {
+        allProspects
+    } else {
+        allProspects.filter { prospect ->
+            prospect.first.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -628,12 +647,17 @@ fun ActiveProspectsSection(navController: NavController) {
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            item { ProspectItem(name = "Amanda Cifuentes", imageRes = R.drawable.img_prospecto_1) }
-            item { ProspectItem(name = "Anderson Souza", imageRes = R.drawable.img_prospecto_2) }
-            item { ProspectItem(name = "Ana Reyes", imageRes = R.drawable.img_prospecto_3) }
-            item { ProspectItem(name = "Ramiro Castillo", imageRes = R.drawable.img_prospecto_4) }
-            item { ProspectItem(name = "Gustavo Ramos", imageRes = R.drawable.img_prospecto_5) }
+
+        // 3. Mostramos el resultado
+        if (filteredProspects.isEmpty()) {
+            Text("No se encontraron clientes", color = TextGray, fontSize = 14.sp)
+        } else {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(filteredProspects.size) { index ->
+                    val prospect = filteredProspects[index]
+                    ProspectItem(name = prospect.first, imageRes = prospect.second)
+                }
+            }
         }
     }
 }
@@ -658,17 +682,47 @@ fun ExploreProspectItem() {
     }
 }
 
+// Creamos una mini clase para ordenar los datos de la agenda (puedes ponerla al final del archivo junto a data class Property)
+data class AgendaData(val time: String, val dateTag: String, val clientName: String, val location: String, val imageRes: Int)
+
 @Composable
-fun AgendaSection() {
+fun AgendaSection(searchQuery: String) {
+    val allAgendaItems = listOf(
+        AgendaData("09:00 AM", "Hoy", "Amanda Cifuentes", "Zona 15", R.drawable.propiedad_agenda_1),
+        AgendaData("11:30 AM", "Hoy", "Anderson Souza", "Zona 10", R.drawable.propiedad_agenda_2)
+    )
+
+    val filteredAgenda = if (searchQuery.isBlank()) {
+        allAgendaItems
+    } else {
+        allAgendaItems.filter { item ->
+            item.clientName.contains(searchQuery, ignoreCase = true) ||
+                    item.location.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = "Agenda", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
             Text(text = "Ver toda", fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.SemiBold)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            item { AgendaCard(time = "09:00 AM", dateTag = "Hoy", clientName = "Amanda Cifuentes", location = "Zona 15", imageRes = R.drawable.propiedad_agenda_1) }
-            item { AgendaCard(time = "11:30 AM", dateTag = "Hoy", clientName = "Anderson Souza", location = "Zona 10", imageRes = R.drawable.propiedad_agenda_2) }
+
+        if (filteredAgenda.isEmpty()) {
+            Text("No hay citas que coincidan", color = TextGray, fontSize = 14.sp)
+        } else {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(filteredAgenda.size) { index ->
+                    val item = filteredAgenda[index]
+                    AgendaCard(
+                        time = item.time,
+                        dateTag = item.dateTag,
+                        clientName = item.clientName,
+                        location = item.location,
+                        imageRes = item.imageRes
+                    )
+                }
+            }
         }
     }
 }
