@@ -214,7 +214,7 @@ fun LoginScreen(navController: NavController) {
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     // ¡Entró! Mostramos un mensajito rápido y navegamos
-                                    android.widget.Toast.makeText(context, "¡Bienvenido agente! 🕵️‍♂️", android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(context, "¡Bienvenido agente!", android.widget.Toast.LENGTH_SHORT).show()
                                     navController.navigate("home_screen")
                                 } else {
                                     // Falló (mala contraseña o correo). Activamos tu banner de error.

@@ -28,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.text.style.TextAlign
+// Imports para que funcione Firebase
+import com.google.firebase.firestore.FirebaseFirestore
+import androidx.compose.foundation.lazy.items
 
 // ==========================================
 // PALETA DE COLORES (Basada en tu Figma)
@@ -318,6 +321,36 @@ fun HeroCard(title: String, subtitle: String, imageRes: Int) {
 
 @Composable
 fun ActivePropertiesSection() {
+    // 1. Estados para guardar la lista de casas y saber si está cargando
+    var propertiesList by remember { mutableStateOf<List<Property>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // 2. EL PUENTE: Vamos a Firebase a traer los datos nomás carga la pantalla
+    LaunchedEffect(Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("properties")
+            .get()
+            .addOnSuccessListener { result ->
+                val list = mutableListOf<Property>()
+                for (document in result) {
+                    list.add(
+                        Property(
+                            id = document.id,
+                            title = document.getString("title") ?: "Sin título",
+                            price = document.getLong("price") ?: 0L,
+                            location = document.getString("location") ?: "Sin ubicación"
+                        )
+                    )
+                }
+                propertiesList = list // Guardamos la lista descargada
+                isLoading = false // Apagamos la carga
+            }
+            .addOnFailureListener {
+                isLoading = false
+            }
+    }
+
+    // 3. LA INTERFAZ GRÁFICA
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -330,36 +363,29 @@ fun ActivePropertiesSection() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            item {
-                PropertyCard(
-                    type = "Apartamento",
-                    title = "Apartamento Vista Hermosa",
-                    interested = 7,
-                    location = "Zona 15, Cd. de Guatemala",
-                    price = "$1,200", // Precio ajustado a USD para Zona 15
-                    imageRes = R.drawable.propiedad_1
-                )
-            }
-            item {
-                PropertyCard(
-                    type = "Apartamento",
-                    title = "Apartamento Neo Zona 10",
-                    interested = 12,
-                    location = "Zona 10, Cd. de Guatemala",
-                    price = "$1,500", // Precio ajustado a USD para Zona 10
-                    imageRes = R.drawable.propiedad_2
-                )
-            }
-            item {
-                PropertyCard(
-                    type = "Chalet",
-                    title = "Chalet en Monterrico",
-                    interested = 4,
-                    location = "Monterrico, Santa Rosa",
-                    price = "Q. 8,500", // Ajuste para un chalet mensual
-                    imageRes = R.drawable.propiedad_3
-                )
+        // Si está cargando, mostramos un textito, si no, mostramos el carrusel
+        if (isLoading) {
+            Text(text = "Descargando propiedades...", color = TextGray, modifier = Modifier.padding(16.dp))
+        } else if (propertiesList.isEmpty()) {
+            Text(text = "Aún no hay propiedades en el sistema.", color = TextGray, modifier = Modifier.padding(16.dp))
+        } else {
+            // EL PINTOR: Dibuja una PropertyCard por cada casa que bajó de Firebase
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(propertiesList) { prop ->
+
+                    // 1. Agregamos esta línea mágica para darle formato con comas:
+                    val precioConComas = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(prop.price)
+
+                    PropertyCard(
+                        type = prop.type,
+                        title = prop.title,
+                        interested = prop.interested,
+                        location = prop.location,
+                        // 2. Usamos la nueva variable formateada aquí:
+                        price = "Q. $precioConComas",
+                        imageRes = prop.imageRes
+                    )
+                }
             }
         }
     }
@@ -776,3 +802,17 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
         }
     }
 }
+
+// ==========================================
+// MODELO DE DATOS PARA FIREBASE
+// ==========================================
+data class Property(
+    val id: String = "",
+    val title: String = "",
+    val price: Long = 0L,
+    val location: String = "",
+    // Valores por defecto para lo que aún no tenemos en DB:
+    val type: String = "Casa",
+    val interested: Int = 5, // Número por defecto
+    val imageRes: Int = R.drawable.propiedad_1 // Imagen por defecto
+)
