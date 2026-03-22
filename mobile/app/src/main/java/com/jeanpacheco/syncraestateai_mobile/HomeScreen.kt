@@ -53,6 +53,8 @@ val SurfaceGray = Color(0xFFF4F6F9)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+    // --- NUEVO: ESTADO GLOBAL PARA EL BUSCADOR ---
+    var globalSearchQuery by remember { mutableStateOf("") }
     // --- NUEVO: ESTADO PARA NOTIFICACIONES ---
     var showNotifications by remember { mutableStateOf(false) }
 
@@ -97,14 +99,17 @@ fun HomeScreen(navController: NavController) {
 
                 // 2. CONTENIDO SOBRE EL FONDO CURVO
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    // MODIFICADO: Pasamos las acciones al Header
                     HeaderSection(
                         onBellClick = { showNotifications = true },
                         onProfileClick = { navController.navigate("agent_profile") }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Box(modifier = Modifier.padding(horizontal = 24.dp)) {
-                        SearchBarSection()
+                        // AHORA LE PASAMOS EL ESTADO Y CÓMO CAMBIARLO
+                        SearchBarSection(
+                            searchQuery = globalSearchQuery,
+                            onSearchQueryChange = { globalSearchQuery = it }
+                        )
                     }
                 }
             }
@@ -119,8 +124,8 @@ fun HomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
                 HeroCarouselSection()
                 Spacer(modifier = Modifier.height(32.dp))
-                // MODIFICADO: Agregamos navController
-                ActivePropertiesSection(navController)
+                // AHORA LE PASAMOS EL NAVCONTROLLER Y EL BUSCADOR
+                ActivePropertiesSection(navController = navController, searchQuery = globalSearchQuery)
                 Spacer(modifier = Modifier.height(32.dp))
                 ActiveProspectsSection(navController = navController)
 
@@ -308,12 +313,9 @@ fun HeaderSection(onBellClick: () -> Unit, onProfileClick: () -> Unit) {
 }
 
 @Composable
-fun SearchBarSection() {
-    var searchQuery by remember { mutableStateOf("") }
+fun SearchBarSection(searchQuery: String, onSearchQueryChange: (String) -> Unit) {
     val context = LocalContext.current
 
-    // 1. EL "ATRAPADOR" DEL RESULTADO DE VOZ
-    // Esto se queda esperando a que Google termine de escuchar y nos devuelva el texto
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -321,14 +323,13 @@ fun SearchBarSection() {
             val data = result.data
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val spokenText = results?.get(0) ?: ""
-            // ¡Magia! Ponemos lo que escuchó en la barra de búsqueda
-            searchQuery = spokenText
+            onSearchQueryChange(spokenText) // <-- Le avisamos a HomeScreen lo que escuchamos
         }
     }
 
     OutlinedTextField(
         value = searchQuery,
-        onValueChange = { searchQuery = it },
+        onValueChange = onSearchQueryChange, // <-- Cada vez que tecleas, avisa a HomeScreen
         placeholder = { Text("Buscar cliente o propiedad...", color = Color.Gray, fontSize = 14.sp) },
         leadingIcon = {
             Icon(Icons.Default.Search, contentDescription = "Buscar", tint = SyncraPrimary)
@@ -347,17 +348,14 @@ fun SearchBarSection() {
                     modifier = Modifier
                         .size(24.dp)
                         .clickable {
-                            // 2. LANZAMOS EL RECONOCEDOR DE VOZ DE GOOGLE
                             try {
                                 val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                                     putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                                    // Le configuramos el español de Guatemala para que entienda bien el acento
                                     putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-GT")
                                     putExtra(RecognizerIntent.EXTRA_PROMPT, "Dime qué estás buscando...")
                                 }
                                 speechRecognizerLauncher.launch(intent)
                             } catch (e: Exception) {
-                                // Por si lo prueban en un teléfono viejito o un emulador sin Google
                                 Toast.makeText(context, "Tu dispositivo no soporta dictado por voz", Toast.LENGTH_SHORT).show()
                             }
                         }
@@ -367,8 +365,8 @@ fun SearchBarSection() {
         modifier = Modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = SyncraPrimary, // <-- EL COLOR DEL TEXTO AL ESCRIBIR
-            unfocusedTextColor = SyncraPrimary, // <-- EL COLOR DEL TEXTO CUANDO NO ESTÁ SELECCIONADO
+            focusedTextColor = SyncraPrimary,
+            unfocusedTextColor = SyncraPrimary,
             unfocusedContainerColor = SurfaceGray,
             focusedContainerColor = SurfaceGray,
             unfocusedBorderColor = Color.Transparent,
@@ -472,7 +470,7 @@ fun HeroCard(title: String, subtitle: String, imageRes: Int) {
 }
 
 @Composable
-fun ActivePropertiesSection(navController: NavController) {
+fun ActivePropertiesSection(navController: NavController, searchQuery: String) {
     var propertiesList by remember { mutableStateOf<List<Property>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -492,6 +490,16 @@ fun ActivePropertiesSection(navController: NavController) {
             propertiesList = list
             isLoading = false
         }.addOnFailureListener { isLoading = false }
+    }
+
+    // --- AQUÍ ESTÁ LA MAGIA DEL FILTRO ---
+    val filteredProperties = if (searchQuery.isBlank()) {
+        propertiesList
+    } else {
+        propertiesList.filter { prop ->
+            prop.title.contains(searchQuery, ignoreCase = true) ||
+                    prop.location.contains(searchQuery, ignoreCase = true)
+        }
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -514,9 +522,12 @@ fun ActivePropertiesSection(navController: NavController) {
 
         if (isLoading) {
             Text(text = "Descargando propiedades...", color = TextGray, modifier = Modifier.padding(16.dp))
+        } else if (filteredProperties.isEmpty()) {
+            Text(text = "No se encontraron propiedades", color = TextGray, modifier = Modifier.padding(16.dp))
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(propertiesList) { prop ->
+                // AQUÍ USAMOS LA LISTA FILTRADA
+                items(filteredProperties) { prop ->
                     val precioConComas = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(prop.price)
                     PropertyCard(
                         type = prop.type,
