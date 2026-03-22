@@ -55,6 +55,16 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(navController = navController)
                         }
 
+                        // Ruta 4.5.1: Pantalla para el perfil del agente.
+                        composable("agent_profile") {
+                            AgentProfileScreen(navController = navController)
+                        }
+
+                        // Ruta 4.5.2: Catálogo completo de propiedades.
+                        composable("all_properties") {
+                            AllPropertiesScreen(navController = navController)
+                        }
+
                         // Ruta 5: Pantalla de Clientes (Management Pages).
                         composable("clients") {
                             ClientsScreen(navController = navController)
@@ -68,11 +78,6 @@ class MainActivity : ComponentActivity() {
                         // Ruta 7: Pantalla para detalles de propiedad.
                         composable("detalle_propiedad") {
                             PropertyDetailScreen(navController = navController)
-                        }
-
-                        // Ruta 8: Pantalla para el perfil del agente.
-                        composable("agent_profile") {
-                            AgentProfileScreen(navController = navController)
                         }
                     }
                 }
