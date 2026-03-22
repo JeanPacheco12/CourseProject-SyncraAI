@@ -338,7 +338,9 @@ fun ActivePropertiesSection() {
                             id = document.id,
                             title = document.getString("title") ?: "Sin título",
                             price = document.getLong("price") ?: 0L,
-                            location = document.getString("location") ?: "Sin ubicación"
+                            location = document.getString("location") ?: "Sin ubicación",
+                            // ¡ESTA ES LA LÍNEA NUEVA PARA EL CAMPO DE INTERESADOS!
+                            interested = document.getLong("interested")?.toInt() ?: 0
                         )
                     )
                 }
