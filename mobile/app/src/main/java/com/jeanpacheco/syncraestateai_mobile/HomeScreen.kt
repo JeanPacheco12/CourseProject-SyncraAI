@@ -31,6 +31,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.automirrored.filled.Send // Por si lo necesitamos luego
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import kotlinx.coroutines.launch
 // Imports para que funcione Firebase
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.foundation.lazy.items
@@ -66,8 +69,28 @@ fun HomeScreen(navController: NavController) {
         ))
     }
 
+    // --- NUEVOS ESTADOS PARA SCROLL Y TECLADO ---
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val searchFocusRequester = remember { FocusRequester() }
+
     Scaffold(
-        bottomBar = { HomeBottomNavigationBar(navController) },
+        bottomBar = {
+            HomeBottomNavigationBar(
+                navController = navController,
+                onHomeClick = {
+                    // ACCIÓN CASITA: Sube hasta arriba suavemente
+                    coroutineScope.launch { scrollState.animateScrollTo(0) }
+                },
+                onSearchClick = {
+                    // ACCIÓN LUPA: Sube hasta arriba y abre el teclado en el buscador
+                    coroutineScope.launch {
+                        scrollState.animateScrollTo(0)
+                        searchFocusRequester.requestFocus()
+                    }
+                }
+            )
+        },
         containerColor = Color.White
     ) { paddingValues ->
 
@@ -75,7 +98,7 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState) // <-- LE PASAMOS NUESTRO SCROLL STATE AQUÍ
         ) {
 
             // ==========================================
@@ -105,10 +128,11 @@ fun HomeScreen(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Box(modifier = Modifier.padding(horizontal = 24.dp)) {
-                        // AHORA LE PASAMOS EL ESTADO Y CÓMO CAMBIARLO
+                        // AHORA LE PASAMOS EL ESTADO, CÓMO CAMBIARLO Y EL FOCUS REQUESTER
                         SearchBarSection(
                             searchQuery = globalSearchQuery,
-                            onSearchQueryChange = { globalSearchQuery = it }
+                            onSearchQueryChange = { globalSearchQuery = it },
+                            focusRequester = searchFocusRequester
                         )
                     }
                 }
@@ -314,7 +338,11 @@ fun HeaderSection(onBellClick: () -> Unit, onProfileClick: () -> Unit) {
 }
 
 @Composable
-fun SearchBarSection(searchQuery: String, onSearchQueryChange: (String) -> Unit) {
+fun SearchBarSection(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    focusRequester: FocusRequester
+) {
     val context = LocalContext.current
 
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
@@ -363,7 +391,10 @@ fun SearchBarSection(searchQuery: String, onSearchQueryChange: (String) -> Unit)
                 )
             }
         },
-        modifier = Modifier.fillMaxWidth().height(56.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .focusRequester(focusRequester), // <-- AQUÍ USAMOS EL IMÁN DEL TECLADO
         shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = SyncraPrimary,
@@ -585,18 +616,22 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
 }
 
 @Composable
-fun HomeBottomNavigationBar(navController: NavController) {
+fun HomeBottomNavigationBar(
+    navController: NavController,
+    onHomeClick: () -> Unit,
+    onSearchClick: () -> Unit
+) {
     NavigationBar(containerColor = Color.White, tonalElevation = 0.dp) {
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
             selected = true,
-            onClick = { /* Home */ },
+            onClick = { onHomeClick() }, // <-- ACCIÓN DE LA CASITA
             colors = NavigationBarItemDefaults.colors(selectedIconColor = SyncraPrimary, indicatorColor = Color.Transparent)
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
             selected = false,
-            onClick = { /* Navegar */ },
+            onClick = { onSearchClick() }, // <-- ACCIÓN DE LA LUPA
             colors = NavigationBarItemDefaults.colors(unselectedIconColor = SyncraPrimary)
         )
         NavigationBarItem(
@@ -732,18 +767,31 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
     Card(modifier = Modifier.width(280.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = SurfaceGray)) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
-                Image(painter = painterResource(id = imageRes), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                Box(modifier = Modifier.align(Alignment.TopEnd).padding(12.dp).size(42.dp).clip(CircleShape).background(Color(0xFF25D366))) {
-                    Icon(painter = painterResource(id = R.drawable.wsp_logo_1), contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp).align(Alignment.Center))
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = "Imagen de la propiedad en agenda",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Opcional: Una pequeña viñeta de hora sobre la imagen si la necesitas
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.9f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(text = "$dateTag $time", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
                 }
             }
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text(text = clientName, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
-                Spacer(modifier = Modifier.height(8.dp))
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = "Cita con $clientName", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SyncraPrimary)
+                Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painter = painterResource(id = R.drawable.ic_ubicacion), contentDescription = null, modifier = Modifier.size(16.dp), tint = TextGray)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = location, fontSize = 14.sp, color = TextGray)
+                    Icon(painter = painterResource(id = R.drawable.ic_ubicacion), contentDescription = null, modifier = Modifier.size(14.dp), tint = TextGray)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = location, color = TextGray, fontSize = 13.sp)
                 }
             }
         }
