@@ -30,9 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material.icons.automirrored.filled.Send // Por si lo necesitamos luego
 // Imports para que funcione Firebase
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.foundation.lazy.items
+
 
 // ==========================================
 // PALETA DE COLORES (Basada en tu Figma)
@@ -47,6 +49,14 @@ val SurfaceGray = Color(0xFFF4F6F9)
 fun HomeScreen(navController: NavController) {
     // --- NUEVO: ESTADO PARA NOTIFICACIONES ---
     var showNotifications by remember { mutableStateOf(false) }
+
+    var notificationsList by remember {
+        mutableStateOf(listOf(
+            NotificationData("Cita confirmada", "Amanda Cifuentes aceptó la visita para hoy.", "10 min", Icons.Default.DateRange),
+            NotificationData("Nuevo Prospecto", "Anderson Souza envió un mensaje por WhatsApp.", "2h", Icons.Default.Person),
+            NotificationData("Recordatorio", "Seguimiento pendiente para Gustavo Ramos.", "5h", Icons.Default.Notifications)
+        ))
+    }
 
     Scaffold(
         bottomBar = { HomeBottomNavigationBar(navController) },
@@ -140,39 +150,45 @@ fun HomeScreen(navController: NavController) {
                             fontWeight = FontWeight.ExtraBold,
                             color = SyncraPrimary
                         )
+                        // ACCIÓN: Al dar clic, vaciamos la lista
                         Text(
                             text = "Marcar como leídas",
                             fontSize = 12.sp,
                             color = Color(0xFF8DB049),
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable { /* Acción */ }
+                            modifier = Modifier.clickable { notificationsList = emptyList() }
                         )
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Lista de notificaciones con el diseño nuevo
-                    NotificationItem(
-                        title = "Cita confirmada",
-                        desc = "Amanda Cifuentes aceptó la visita para hoy.",
-                        time = "10 min",
-                        icon = Icons.Default.DateRange,
-                        isNew = true
-                    )
-                    NotificationItem(
-                        title = "Nuevo Prospecto",
-                        desc = "Anderson Souza envió un mensaje por WhatsApp.",
-                        time = "2h",
-                        icon = Icons.Default.Person,
-                        isNew = true
-                    )
-                    NotificationItem(
-                        title = "Recordatorio",
-                        desc = "Seguimiento pendiente para Gustavo Ramos.",
-                        time = "5h",
-                        icon = Icons.Default.Notifications,
-                        isNew = false
-                    )
+                    // LÓGICA DE PANTALLA VACÍA O LISTA
+                    if (notificationsList.isEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                Icons.Default.CheckCircle, // <--- ESTA ES LA RUTA EXACTA
+                                contentDescription = "Todo leído",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("¡Estás al día, Rodrigo!", fontWeight = FontWeight.Bold, color = SyncraPrimary)
+                            Text("No tienes notificaciones pendientes.", color = TextGray, fontSize = 14.sp)
+                        }
+                    } else {
+                        notificationsList.forEach { notification ->
+                            NotificationItem(
+                                title = notification.title,
+                                desc = notification.desc,
+                                time = notification.time,
+                                icon = notification.icon,
+                                isNew = true
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -641,4 +657,11 @@ data class Property(
     val type: String = "Casa",
     val interested: Int = 5,
     val imageRes: Int = R.drawable.propiedad_1
+)
+
+data class NotificationData(
+    val title: String,
+    val desc: String,
+    val time: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
