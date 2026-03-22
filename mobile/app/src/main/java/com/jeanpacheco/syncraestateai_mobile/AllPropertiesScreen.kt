@@ -161,8 +161,8 @@ fun AllPropertiesScreen(navController: NavController) {
                                 price = "Q. $precioConComas",
                                 imageRes = prop.imageRes,
                                 onClick = {
-                                    // --- AQUÍ CONECTAMOS CON LA RUTA EXACTA DE TU MAINACTIVITY ---
-                                    navController.navigate("detalle_propiedad")
+                                    // AHORA ENVIAMOS EL ID DE LA PROPIEDAD
+                                    navController.navigate("property_detail/${prop.id}")
                                 }
                             )
                         }

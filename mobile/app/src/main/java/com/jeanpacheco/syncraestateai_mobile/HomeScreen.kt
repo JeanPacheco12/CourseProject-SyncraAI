@@ -602,7 +602,10 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String, s
                         location = prop.location,
                         price = "Q. $precioConComas",
                         imageRes = prop.imageRes,
-                        onClick = { navController.navigate("detalle_propiedad") }
+                        onClick = {
+                            // AHORA ENVIAMOS EL ID DE LA PROPIEDAD
+                            navController.navigate("property_detail/${prop.id}")
+                        }
                     )
                 }
             }

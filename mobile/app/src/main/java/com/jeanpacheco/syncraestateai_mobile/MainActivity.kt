@@ -16,6 +16,9 @@ import androidx.navigation.compose.rememberNavController
 
 import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraEstateAIMobileTheme
 
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,9 +78,16 @@ class MainActivity : ComponentActivity() {
                             ClientProfileScreen(navController = navController)
                         }
 
-                        // Ruta 7: Pantalla para detalles de propiedad.
-                        composable("detalle_propiedad") {
-                            PropertyDetailScreen(navController = navController)
+                        // Ruta 7: Pantalla para detalles de propiedad (AHORA DINÁMICA).
+                        composable(
+                            route = "property_detail/{propertyId}",
+                            arguments = listOf(navArgument("propertyId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            // Extraemos el ID que viene en la ruta
+                            val propertyId = backStackEntry.arguments?.getString("propertyId")
+
+                            // Si por alguna razón es nulo, le pasamos un string vacío para que no truene la app
+                            PropertyDetailScreen(navController = navController, propertyId = propertyId ?: "")
                         }
                     }
                 }
