@@ -23,7 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 fun AllPropertiesScreen(navController: NavController) {
     var propertiesList by remember { mutableStateOf<List<Property>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var searchQuery by remember { mutableStateOf("") } // <-- Agregamos estado para el buscador
+    var searchQuery by remember { mutableStateOf("") }
 
     // Descargamos TODAS las propiedades desde Firebase
     LaunchedEffect(Unit) {
@@ -39,7 +39,7 @@ fun AllPropertiesScreen(navController: NavController) {
                     interested = document.getLong("interested")?.toInt() ?: 0,
                     type = document.getString("type") ?: "Propiedad",
                     status = document.getString("status") ?: "Todas",
-                    imageRes = R.drawable.img_carrusel_1 // Imagen por defecto
+                    imageRes = R.drawable.img_carrusel_1
                 ))
             }
             propertiesList = list
@@ -103,6 +103,9 @@ fun AllPropertiesScreen(navController: NavController) {
                         .height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
+                        // --- AQUÍ ESTÁ LA MAGIA DEL COLOR NEGRO ---
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
                         unfocusedContainerColor = SurfaceGray,
                         focusedContainerColor = SurfaceGray,
                         unfocusedBorderColor = Color.Transparent,
@@ -158,7 +161,8 @@ fun AllPropertiesScreen(navController: NavController) {
                                 price = "Q. $precioConComas",
                                 imageRes = prop.imageRes,
                                 onClick = {
-                                    navController.navigate("property_detail/${prop.id}")
+                                    // --- AQUÍ CONECTAMOS CON LA RUTA EXACTA DE TU MAINACTIVITY ---
+                                    navController.navigate("detalle_propiedad")
                                 }
                             )
                         }
