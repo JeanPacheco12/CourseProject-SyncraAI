@@ -51,6 +51,7 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
     var clientDob by remember { mutableStateOf("") }
     var clientStatus by remember { mutableStateOf("Nuevo") }
     var isLoading by remember { mutableStateOf(true) }
+    var clientRequirement by remember { mutableStateOf("") } // <-- ¡AGREGA ESTA LÍNEA!
 
     // --- DESCARGAR DATOS DESDE FIREBASE ---
     LaunchedEffect(clientId) {
@@ -69,6 +70,7 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
                         clientNationality = document.getString("nationality") ?: "N/A"
                         clientDob = document.getString("dob") ?: "N/A"
                         clientStatus = document.getString("status") ?: "Nuevo"
+                        clientRequirement = document.getString("requirement") ?: "N/A" // <-- ¡AGREGA ESTA LÍNEA TAMBIÉN!
                     }
                     isLoading = false
                 }
@@ -178,7 +180,14 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
 
                 Text(text = "Propiedad de interés", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(16.dp))
-                PropertyOfInterestCard(navController = navController)
+
+                // 1. AHORA LE PASAMOS LA INFO DEL CLIENTE A LA TARJETA
+                PropertyOfInterestCard(
+                    navController = navController,
+                    interest = clientInterest,
+                    location = clientLocation,
+                    budget = clientBudget
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -195,8 +204,14 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
 
             if (showPitchSheet) {
                 ModalBottomSheet(onDismissRequest = { showPitchSheet = false }, sheetState = sheetState, containerColor = Color.White) {
-                    // Pasamos el nombre y la zona para el pitch dinámico
-                    SmartPitchSheetContent(clientName, clientLocation)
+                    // 2. AHORA LE PASAMOS TODAS LAS VARIABLES AL PITCH
+                    SmartPitchSheetContent(
+                        clientName = clientName,
+                        clientLocation = clientLocation,
+                        clientInterest = clientInterest,
+                        clientProfession = clientProfession,
+                        clientRequirement = clientRequirement
+                    )
                 }
             }
         }
@@ -204,18 +219,30 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
 }
 
 @Composable
-fun SmartPitchSheetContent(clientName: String, clientLocation: String) {
-    // --- PITCH DINÁMICO ---
+fun SmartPitchSheetContent(
+    clientName: String,
+    clientLocation: String,
+    clientInterest: String,
+    clientProfession: String,
+    clientRequirement: String
+) {
+    // --- PITCH DINÁMICO Y PERSUASIVO ---
     var pitchText by remember {
-        mutableStateOf("Hola $clientName 👋, he analizado tus preferencias y vi que buscas en $clientLocation. Creo que tenemos la propiedad ideal para ti con vías de acceso rápido. ¿Te parece si agendamos una visita hoy mismo para que la conozcas?")
+        mutableStateOf(
+            "¡Hola $clientName! 👋 Espero que estés teniendo un excelente día.\n\n" +
+                    "Viendo tu perfil, entiendo que como $clientProfession valoras tu tiempo y buscas inversiones inteligentes. Noté que tienes un interés fuerte en: $clientInterest por el sector de $clientLocation, buscando específicamente: $clientRequirement.\n\n" +
+                    "Precisamente acaba de entrar al mercado una opción exclusiva que encaja a la perfección con lo que necesitas. Tiene un altísimo potencial y, por sus características, se moverá muy rápido.\n\n" +
+                    "¿Te parece si hacemos un espacio de 5 minutos en tu agenda hoy mismo para compartirte los detalles en privado y que seas de los primeros en verla?"
+        )
     }
-    // ... TODO TU CÓDIGO DE SmartPitchSheetContent SE MANTIENE EXACTAMENTE IGUAL HACIA ABAJO
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
-            .padding(bottom = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(bottom = 32.dp)
+            .verticalScroll(rememberScrollState()), // <-- ¡ESTA ES LA LÍNEA MÁGICA!
+            horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val geminiGradient = Brush.linearGradient(colors = listOf(Color(0xFF4285F4), Color(0xFF9B72CB), Color(0xFFD96570)))
         val glowGradient = Brush.radialGradient(colors = listOf(Color(0xFF9B72CB).copy(alpha = 0.8f), Color.Transparent))
@@ -237,7 +264,7 @@ fun SmartPitchSheetContent(clientName: String, clientLocation: String) {
         OutlinedTextField(
             value = pitchText,
             onValueChange = { pitchText = it },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp),
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = darkGrayBackground, unfocusedContainerColor = darkGrayBackground,
@@ -272,9 +299,10 @@ fun InfoBlock(modifier: Modifier = Modifier, label: String, value: String) {
             .padding(vertical = 12.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = label, fontSize = 11.sp, color = Color.Gray, maxLines = 2, textAlign = TextAlign.Center, lineHeight = 12.sp)
+        Text(text = label, fontSize = 11.sp, color = Color.Gray, maxLines = 1, textAlign = TextAlign.Center, lineHeight = 12.sp)
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF234F68), maxLines = 1, textAlign = TextAlign.Center)
+        // Aquí le subimos los maxLines a 3 para que no corte el texto
+        Text(text = value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF234F68), maxLines = 3, textAlign = TextAlign.Center, lineHeight = 14.sp)
     }
 }
 
@@ -294,22 +322,23 @@ fun ProfileDataField(label: String, value: String) {
 }
 
 @Composable
-fun PropertyOfInterestCard(navController: NavController) {
+fun PropertyOfInterestCard(navController: NavController, interest: String, location: String, budget: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F6F9)),
-        onClick = { navController.navigate("detalle_propiedad") }
+        onClick = { navController.navigate("property_detail/1") } // <- AQUÍ arreglamos el crasheo también
     ) {
         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Image(painter = painterResource(id = R.drawable.propiedad_agenda_1), contentDescription = "Propiedad", modifier = Modifier.size(80.dp).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Apartamento Vista Hermosa", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF234F68))
+                // Aquí usamos las variables que le pasamos
+                Text(text = interest, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF234F68), maxLines = 2)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Zona 15, Guatemala", fontSize = 13.sp, color = Color.Gray)
+                Text(text = location, fontSize = 13.sp, color = Color.Gray, maxLines = 1)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "$135,000", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F))
+                Text(text = budget, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F))
             }
             Box(modifier = Modifier.size(16.dp).clip(CircleShape).background(Color(0xFF8BC83F)))
         }
