@@ -685,21 +685,36 @@ fun HomeBottomNavigationBar(
 // ==========================================
 @Composable
 fun ActiveProspectsSection(navController: NavController, searchQuery: String) {
-    // 1. Creamos la lista de prospectos
-    val allProspects = listOf(
-        Pair("Amanda Cifuentes", R.drawable.img_prospecto_1),
-        Pair("Anderson Souza", R.drawable.img_prospecto_2),
-        Pair("Ana Reyes", R.drawable.img_prospecto_3),
-        Pair("Ramiro Castillo", R.drawable.img_prospecto_4),
-        Pair("Gustavo Ramos", R.drawable.img_prospecto_5)
-    )
+    var clientsList by remember { mutableStateOf<List<Client>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    // 2. Aplicamos el filtro mágico
+    // Descargamos los clientes desde Firebase
+    LaunchedEffect(Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("clients").get().addOnSuccessListener { result ->
+            val list = mutableListOf<Client>()
+            for (document in result) {
+                list.add(Client(
+                    id = document.id,
+                    name = document.getString("name") ?: "Sin nombre",
+                    requirement = document.getString("requirement") ?: "",
+                    time = document.getString("time") ?: "",
+                    status = document.getString("status") ?: "Nuevo",
+                    unread = document.getBoolean("unread") ?: false,
+                    imageRes = R.drawable.img_prospecto_1 // Imagen por defecto por ahora
+                ))
+            }
+            clientsList = list
+            isLoading = false
+        }.addOnFailureListener { isLoading = false }
+    }
+
+    // Aplicamos el filtro de búsqueda
     val filteredProspects = if (searchQuery.isBlank()) {
-        allProspects
+        clientsList
     } else {
-        allProspects.filter { prospect ->
-            prospect.first.contains(searchQuery, ignoreCase = true)
+        clientsList.filter { prospect ->
+            prospect.name.contains(searchQuery, ignoreCase = true)
         }
     }
 
@@ -720,14 +735,22 @@ fun ActiveProspectsSection(navController: NavController, searchQuery: String) {
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3. Mostramos el resultado
-        if (filteredProspects.isEmpty()) {
+        // Mostramos el resultado
+        if (isLoading) {
+            Text("Cargando clientes...", color = TextGray, fontSize = 14.sp)
+        } else if (filteredProspects.isEmpty()) {
             Text("No se encontraron clientes", color = TextGray, fontSize = 14.sp)
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(filteredProspects.size) { index ->
-                    val prospect = filteredProspects[index]
-                    ProspectItem(name = prospect.first, imageRes = prospect.second)
+                items(filteredProspects) { prospect ->
+                    ProspectItem(
+                        name = prospect.name,
+                        imageRes = prospect.imageRes,
+                        onClick = {
+                            // Navegamos al perfil dinámico enviando el ID
+                            navController.navigate("client_profile/${prospect.id}")
+                        }
+                    )
                 }
             }
         }
@@ -735,8 +758,11 @@ fun ActiveProspectsSection(navController: NavController, searchQuery: String) {
 }
 
 @Composable
-fun ProspectItem(name: String, imageRes: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(76.dp)) {
+fun ProspectItem(name: String, imageRes: Int, onClick: () -> Unit) { // <-- Agregamos onClick
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(76.dp).clickable { onClick() } // <-- Lo hacemos clickable
+    ) {
         Image(painter = painterResource(id = imageRes), contentDescription = name, modifier = Modifier.size(64.dp).clip(CircleShape), contentScale = ContentScale.Crop)
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = name, fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, maxLines = 2)
@@ -851,4 +877,14 @@ data class NotificationData(
     val desc: String,
     val time: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+data class Client(
+    val id: String = "",
+    val name: String = "",
+    val requirement: String = "",
+    val time: String = "",
+    val status: String = "Nuevo", // Aquí vendrá: "Firma hoy", "Visita hoy", etc.
+    val imageRes: Int = R.drawable.img_prospecto_1, // Imagen por defecto
+    val unread: Boolean = false
 )

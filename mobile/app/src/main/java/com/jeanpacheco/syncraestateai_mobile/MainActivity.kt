@@ -73,9 +73,13 @@ class MainActivity : ComponentActivity() {
                             ClientsScreen(navController = navController)
                         }
 
-                        // Ruta 6: Pantalla del perfil del cliente.
-                        composable("client_profile") {
-                            ClientProfileScreen(navController = navController)
+                        // Ruta 6: Pantalla del perfil del cliente (AHORA DINÁMICA).
+                        composable(
+                            route = "client_profile/{clientId}",
+                            arguments = listOf(navArgument("clientId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val clientId = backStackEntry.arguments?.getString("clientId")
+                            ClientProfileScreen(navController = navController, clientId = clientId ?: "")
                         }
 
                         // Ruta 7: Pantalla para detalles de propiedad (AHORA DINÁMICA).
