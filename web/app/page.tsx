@@ -1,6 +1,36 @@
+"use client";
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError("Credenciales incorrectas");
+    }
+  };
+  const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+
+    try {
+      await signInWithPopup(auth, provider);
+      router.push("/dashboard");
+    } catch (err) {
+      setError("Error con Google");
+    }
+  };
   return (
     <main className="relative min-h-screen overflow-hidden">
       {/* Fondo */}
@@ -42,6 +72,7 @@ export default function Home() {
           {/* Google button */}
           <button
             type="button"
+            onClick={handleGoogleLogin}
             className="mb-5 flex h-[56px] w-full items-center justify-center gap-3 rounded-2xl bg-white text-[17px] font-medium text-gray-800 shadow-[0_8px_24px_rgba(0,0,0,0.10)] transition hover:scale-[1.01]"
           >
             <Image
@@ -63,7 +94,7 @@ export default function Home() {
           </div>
 
           {/* Form */}
-          <form className="space-y-3">
+          <form className="space-y-3" onSubmit={handleLogin}>
             <div>
               <label
                 htmlFor="email"
@@ -75,6 +106,8 @@ export default function Home() {
                 id="email"
                 type="email"
                 placeholder="Correo electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-[56px] w-full rounded-2xl border border-white/50 bg-white/82 px-4 text-[16px] text-gray-800 placeholder:text-gray-500 outline-none transition focus:border-lime-500"
               />
             </div>
@@ -92,6 +125,8 @@ export default function Home() {
                   id="password"
                   type="password"
                   placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-transparent text-[16px] text-gray-800 placeholder:text-gray-500 outline-none"
                 />
                 <button
@@ -110,6 +145,9 @@ export default function Home() {
               Iniciar sesión
             </button>
           </form>
+          {error && (
+            <p className="text-red-500 text-center mt-2">{error}</p>
+          )}
 
           {/* Footer */}
           <p className="mt-6 text-center text-[16px] text-white">
