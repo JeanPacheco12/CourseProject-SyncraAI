@@ -1,4 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import {
   Bell,
   ChevronDown,
@@ -21,32 +27,28 @@ const activityRows = [
     propiedad: "Casa en Polanco",
     estado: "En proceso",
     fecha: "24 abr. 2026",
-    badge:
-      "bg-sky-100 text-sky-700",
+    badge: "bg-sky-100 text-sky-700",
   },
   {
     cliente: "Marta Pérez",
     propiedad: "Depto. en Condesa",
     estado: "Completada",
     fecha: "23 abr. 2026",
-    badge:
-      "bg-emerald-100 text-emerald-700",
+    badge: "bg-emerald-100 text-emerald-700",
   },
   {
     cliente: "José Martínez",
     propiedad: "Casa en Polanco",
     estado: "Nueva",
     fecha: "22 abr. 2026",
-    badge:
-      "bg-blue-100 text-blue-700",
+    badge: "bg-blue-100 text-blue-700",
   },
   {
     cliente: "Ana Torres",
     propiedad: "Casa en Las Lomas",
     estado: "Interesado",
     fecha: "20 abr. 2026",
-    badge:
-      "bg-amber-100 text-amber-700",
+    badge: "bg-amber-100 text-amber-700",
   },
 ];
 
@@ -110,7 +112,57 @@ function StatCard({
   );
 }
 
+type UserProfile = {
+  nombre: string;
+  apellido: string;
+  email: string;
+};
+
 export default function DashboardPage() {
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setUserProfile(null);
+        return;
+      }
+
+      try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data() as UserProfile;
+          setUserProfile({
+            nombre: data.nombre || "",
+            apellido: data.apellido || "",
+            email: data.email || user.email || "",
+          });
+        } else {
+          setUserProfile({
+            nombre: "",
+            apellido: "",
+            email: user.email || "",
+          });
+        }
+      } catch (error) {
+        console.error("Error al obtener datos del usuario:", error);
+        setUserProfile({
+          nombre: "",
+          apellido: "",
+          email: user.email || "",
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const nombre = userProfile?.nombre || "Usuario";
+  const apellido = userProfile?.apellido || "";
+  const nombreCompleto = `${nombre} ${apellido}`.trim() || "Usuario";
+
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
       <div className="flex min-h-screen">
@@ -207,7 +259,7 @@ export default function DashboardPage() {
             <div className="mb-8 flex items-start justify-between gap-6">
               <div>
                 <h1 className="text-[48px] font-semibold leading-tight text-slate-800">
-                  Bienvenido de vuelta, Alejandro
+                  Bienvenido de vuelta, {nombre}
                 </h1>
                 <p className="mt-3 text-2xl text-slate-400">
                   Aquí están las métricas de tu negocio hoy.
@@ -218,14 +270,14 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <Image
                     src="/avatar-user.png"
-                    alt="Alejandro Méndez"
+                    alt={nombreCompleto}
                     width={58}
                     height={58}
                     className="rounded-full object-cover"
                   />
                   <div>
                     <p className="text-[18px] font-semibold text-slate-700">
-                      Alejandro Méndez
+                      {nombreCompleto}
                     </p>
                     <p className="text-[16px] text-slate-400">Gerente</p>
                   </div>
@@ -277,11 +329,30 @@ export default function DashboardPage() {
                 <div className="flex h-[250px] items-end justify-between gap-3 rounded-2xl bg-gradient-to-b from-emerald-50 to-white p-4">
                   {[40, 30, 52, 35, 44, 78, 65, 72, 60, 66, 70, 88].map(
                     (h, i) => (
-                      <div key={i} className="flex flex-1 flex-col items-center gap-3">
-                        <div className="w-full rounded-t-2xl bg-emerald-300/80" style={{ height: `${h * 2}px` }} />
+                      <div
+                        key={i}
+                        className="flex flex-1 flex-col items-center gap-3"
+                      >
+                        <div
+                          className="w-full rounded-t-2xl bg-emerald-300/80"
+                          style={{ height: `${h * 2}px` }}
+                        />
                         <span className="text-xs font-medium text-slate-400">
                           {
-                            ["ENE","FEB","MAR","APR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DEC"][i]
+                            [
+                              "ENE",
+                              "FEB",
+                              "MAR",
+                              "APR",
+                              "MAY",
+                              "JUN",
+                              "JUL",
+                              "AGO",
+                              "SEP",
+                              "OCT",
+                              "NOV",
+                              "DEC",
+                            ][i]
                           }
                         </span>
                       </div>
@@ -303,21 +374,22 @@ export default function DashboardPage() {
 
                   <div className="text-right">
                     <p className="text-6xl font-semibold text-slate-800">38</p>
-                    <p className="text-xl text-slate-400">Cada und</p>
+                    <p className="text-xl text-slate-400">Cada uno</p>
                   </div>
                 </div>
 
                 <div className="mt-6 flex h-[220px] items-end justify-between gap-4 rounded-2xl bg-slate-50 p-5">
-                  {[60, 95, 70, 135, 96, 112, 116, 128, 18, 16].map((h, i) => (
-                    <div key={i} className="flex flex-1 flex-col items-center gap-3">
+                  {[60, 95, 70, 135, 96, 112, 116].map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-1 flex-col items-center gap-3"
+                    >
                       <div
                         className="w-full rounded-t-xl bg-emerald-400"
                         style={{ height: `${h}px` }}
                       />
                       <span className="text-xs font-medium text-slate-400">
-                        {
-                          ["LUN","MAR","MIE","MIE","JUE","VIE","SAB","SAB","DOM","DOM"][i]
-                        }
+                        {["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][i]}
                       </span>
                     </div>
                   ))}
@@ -356,7 +428,9 @@ export default function DashboardPage() {
                             {row.estado}
                           </span>
                         </td>
-                        <td className="px-6 py-5 text-slate-500">{row.fecha}</td>
+                        <td className="px-6 py-5 text-slate-500">
+                          {row.fecha}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
