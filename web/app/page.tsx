@@ -152,7 +152,7 @@ export default function Home() {
           {/* Footer */}
           <p className="mt-6 text-center text-[16px] text-white">
             ¿No tienes cuenta?{" "}
-            <a href="#" className="font-semibold text-[#7dd3fc] underline">
+            <a href="/register" className="font-semibold text-[#7dd3fc] underline">
               Crear cuenta
             </a>
           </p>
