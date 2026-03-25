@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
+import { collection, getDocs } from "firebase/firestore";
 import {
   Bell,
   ChevronDown,
@@ -23,37 +24,6 @@ import {
   Check,
 } from "lucide-react";
 
-
-const activityRows = [
-  {
-    cliente: "Alejandro Gómez",
-    propiedad: "Casa en Polanco",
-    estado: "En proceso",
-    fecha: "24 abr. 2026",
-    badge: "bg-sky-100 text-sky-700",
-  },
-  {
-    cliente: "Marta Pérez",
-    propiedad: "Depto. en Condesa",
-    estado: "Completada",
-    fecha: "23 abr. 2026",
-    badge: "bg-emerald-100 text-emerald-700",
-  },
-  {
-    cliente: "José Martínez",
-    propiedad: "Casa en Polanco",
-    estado: "Nueva",
-    fecha: "22 abr. 2026",
-    badge: "bg-blue-100 text-blue-700",
-  },
-  {
-    cliente: "Ana Torres",
-    propiedad: "Casa en Las Lomas",
-    estado: "Interesado",
-    fecha: "20 abr. 2026",
-    badge: "bg-amber-100 text-amber-700",
-  },
-];
 
 function SidebarItem({
   icon,
@@ -121,9 +91,20 @@ type UserProfile = {
   email: string;
 };
 
+type Property = {
+  id: string;
+  title: string;
+  type: string;
+  location: string;
+  price: number;
+  status: string;
+  interested: number;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
   
   const handleLogout = async () => {
     await signOut(auth);
@@ -155,6 +136,13 @@ export default function DashboardPage() {
           email: user.email || "",
         });
       }
+      const propertiesSnapshot = await getDocs(collection(db, "properties"));
+      const propertiesData: Property[] = propertiesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Property, "id">),
+      }));
+
+      setProperties(propertiesData);
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
       setUserProfile({
@@ -411,37 +399,31 @@ export default function DashboardPage() {
 
             <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="mb-6 text-[22px] font-semibold text-slate-800">
-                Actividad reciente
+                Propiedades registradas
               </h3>
 
               <div className="overflow-hidden rounded-2xl border border-slate-100">
                 <table className="w-full">
                   <thead className="bg-slate-50 text-left text-[15px] text-slate-400">
                     <tr>
-                      <th className="px-6 py-4 font-medium">Cliente</th>
-                      <th className="px-6 py-4 font-medium">Propiedad</th>
-                      <th className="px-6 py-4 font-medium">Estado</th>
-                      <th className="px-6 py-4 font-medium">Fecha</th>
+                      <th className="px-6 py-4 font-medium">Título</th>
+                      <th className="px-6 py-4 font-medium">Tipo</th>
+                      <th className="px-6 py-4 font-medium">Ubicación</th>
+                      <th className="px-6 py-4 font-medium">Precio</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {activityRows.map((row) => (
+                    {properties.map((property) => (
                       <tr
-                        key={`${row.cliente}-${row.fecha}`}
+                        key={property.id}
                         className="border-t border-slate-100 text-[16px] text-slate-700"
                       >
-                        <td className="px-6 py-5 font-medium">{row.cliente}</td>
-                        <td className="px-6 py-5">{row.propiedad}</td>
-                        <td className="px-6 py-5">
-                          <span
-                            className={`rounded-full px-4 py-2 text-sm font-medium ${row.badge}`}
-                          >
-                            {row.estado}
-                          </span>
-                        </td>
+                        <td className="px-6 py-5 font-medium">{property.title}</td>
+                        <td className="px-6 py-5">{property.type}</td>
+                        <td className="px-6 py-5">{property.location}</td>
                         <td className="px-6 py-5 text-slate-500">
-                          {row.fecha}
+                          Q{property.price.toLocaleString()}
                         </td>
                       </tr>
                     ))}
