@@ -5,6 +5,8 @@ import Image from "next/image";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
 import {
   Bell,
   ChevronDown,
@@ -20,6 +22,7 @@ import {
   CalendarDays,
   Check,
 } from "lucide-react";
+
 
 const activityRows = [
   {
@@ -119,45 +122,51 @@ type UserProfile = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-
+  
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/");
+  };
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        setUserProfile(null);
-        return;
-      }
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      setUserProfile(null);
+      router.push("/");
+      return;
+    }
 
-      try {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data() as UserProfile;
-          setUserProfile({
-            nombre: data.nombre || "",
-            apellido: data.apellido || "",
-            email: data.email || user.email || "",
-          });
-        } else {
-          setUserProfile({
-            nombre: "",
-            apellido: "",
-            email: user.email || "",
-          });
-        }
-      } catch (error) {
-        console.error("Error al obtener datos del usuario:", error);
+      if (docSnap.exists()) {
+        const data = docSnap.data() as UserProfile;
+        setUserProfile({
+          nombre: data.nombre || "",
+          apellido: data.apellido || "",
+          email: data.email || user.email || "",
+        });
+      } else {
         setUserProfile({
           nombre: "",
           apellido: "",
           email: user.email || "",
         });
       }
-    });
+    } catch (error) {
+      console.error("Error al obtener datos del usuario:", error);
+      setUserProfile({
+        nombre: "",
+        apellido: "",
+        email: user.email || "",
+      });
+    }
+  });
 
-    return () => unsubscribe();
-  }, []);
+  return () => unsubscribe();
+}, [router]);
 
   const nombre = userProfile?.nombre || "Usuario";
   const apellido = userProfile?.apellido || "";
@@ -211,10 +220,13 @@ export default function DashboardPage() {
           </nav>
 
           <div className="px-5 pb-8 pt-4">
-            <SidebarItem
-              icon={<Settings className="h-5 w-5" />}
-              label="Ajustes"
-            />
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium text-red-600 transition hover:bg-red-50"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Cerrar sesión</span>
+            </button>
           </div>
         </aside>
 
