@@ -134,7 +134,7 @@ export default function PropertiesPage() {
               className="flex items-center gap-4 rounded-2xl bg-slate-50 px-5 py-4 text-[18px] font-medium text-slate-800"
             >
               <span className="text-xl text-emerald-700">⊞</span>
-              <span>Inmuebles</span>
+              <span>Propiedades</span>
             </a>
 
             <a
@@ -189,7 +189,7 @@ export default function PropertiesPage() {
             <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <h1 className="text-5xl font-semibold tracking-tight text-slate-800">
-                  Inmuebles
+                  Propiedades
                 </h1>
                 <p className="mt-3 text-xl text-slate-500">
                   Administra las propiedades disponibles y su estado actual.
@@ -197,14 +197,6 @@ export default function PropertiesPage() {
               </div>
 
               <div className="flex items-center gap-5 self-start">
-                <div className="hidden h-14 w-[340px] items-center rounded-2xl border border-slate-200 bg-white px-5 md:flex">
-                  <span className="mr-3 text-xl text-slate-400">⌕</span>
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    className="w-full bg-transparent text-[18px] outline-none placeholder:text-slate-400"
-                  />
-                </div>
 
                 <button className="relative text-2xl text-slate-400">
                   🔔
@@ -281,7 +273,7 @@ export default function PropertiesPage() {
                 href="/properties/new"
                 className="flex h-14 min-w-[250px] items-center justify-center rounded-2xl bg-[#8bb58f] px-8 text-[18px] font-semibold text-white hover:opacity-90"
               >
-                + Nuevo inmueble
+                + Nueva Propiedad
               </a>
             </div>
 
