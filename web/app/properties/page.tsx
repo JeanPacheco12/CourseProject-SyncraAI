@@ -307,9 +307,12 @@ export default function PropertiesPage() {
 
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-6 text-slate-500">
-                            <button className="transition hover:text-slate-800">
+                            <a
+                              href={`/properties/${property.id}`}
+                              className="transition hover:text-slate-800"
+                            >
                               👁 Ver
-                            </button>
+                            </a>
                             <a
                               href={`/properties/edit/${property.id}`}
                               className="transition hover:text-slate-800"
@@ -373,7 +376,7 @@ export default function PropertiesPage() {
                     <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
                       <span>Interesados: {property.interested}</span>
                       <div className="flex gap-4">
-                        <button>Ver</button>
+                        <a href={`/properties/${property.id}`}>Ver</a>
                         <a href={`/properties/edit/${property.id}`}>Editar</a>
                         <button
                           onClick={() => handleDelete(property.id, property.title)}
