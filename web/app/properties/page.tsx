@@ -32,6 +32,10 @@ function getStatusClasses(status: string) {
 
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
+  const [locationFilter, setLocationFilter] = useState("Todas");
+  const [priceOrder, setPriceOrder] = useState("default");
 
   const fetchProperties = async () => {
     try {
@@ -67,7 +71,40 @@ export default function PropertiesPage() {
   useEffect(() => {
     fetchProperties();
   }, []);
-  
+
+  const locationOptions = Array.from(
+    new Set(properties.map((property) => property.location).filter(Boolean))
+  );
+  const filteredProperties = [...properties]
+    .filter((property) => {
+      const term = searchTerm.trim().toLowerCase();
+
+      const matchesSearch =
+        term === "" ||
+        property.title.toLowerCase().includes(term) ||
+        property.type.toLowerCase().includes(term) ||
+        property.location.toLowerCase().includes(term);
+
+      const matchesStatus =
+        statusFilter === "Todos" || property.status === statusFilter;
+
+      const matchesLocation =
+        locationFilter === "Todas" || property.location === locationFilter;
+
+      return matchesSearch && matchesStatus && matchesLocation;
+    })
+    .sort((a, b) => {
+      if (priceOrder === "asc") return a.price - b.price;
+      if (priceOrder === "desc") return b.price - a.price;
+      return 0;
+    });
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("Todos");
+    setLocationFilter("Todas");
+    setPriceOrder("default");
+  };
+    
 
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
@@ -194,25 +231,51 @@ export default function PropertiesPage() {
                 <input
                   type="text"
                   placeholder="Buscar propiedad..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-transparent text-[18px] outline-none placeholder:text-slate-400"
                 />
               </div>
 
-              <button className="flex h-14 min-w-[250px] items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 text-[18px] text-slate-500">
-                <span>
-                  <span className="font-semibold text-slate-700">Estado</span>{" "}
-                  Todos
-                </span>
-                <span>⌄</span>
-              </button>
+              <div className="flex h-14 min-w-[250px] items-center rounded-2xl border border-slate-200 bg-white px-5">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full bg-transparent text-[18px] text-slate-700 outline-none"
+                >
+                  <option value="Todos">Estado: Todos</option>
+                  <option value="Disponible">Disponible</option>
+                  <option value="Reservado">Reservado</option>
+                  <option value="Vendido">Vendido</option>
+                  <option value="Visitas">Visitas</option>
+                </select>
+              </div>
 
-              <button className="flex h-14 min-w-[250px] items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 text-[18px] text-slate-500">
-                <span>
-                  <span className="font-semibold text-slate-700">Ubicación</span>{" "}
-                  Todas
-                </span>
-                <span>⌄</span>
-              </button>
+              <div className="flex h-14 min-w-[250px] items-center rounded-2xl border border-slate-200 bg-white px-5">
+                <select
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="w-full bg-transparent text-[18px] text-slate-700 outline-none"
+                >
+                  <option value="Todas">Ubicación: Todas</option>
+                  {locationOptions.map((location) => (
+                    <option key={location} value={location}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex h-14 min-w-[250px] items-center rounded-2xl border border-slate-200 bg-white px-5">
+                <select
+                  value={priceOrder}
+                  onChange={(e) => setPriceOrder(e.target.value)}
+                  className="w-full bg-transparent text-[18px] text-slate-700 outline-none"
+                >
+                  <option value="default">Precio: Sin orden</option>
+                  <option value="asc">Precio: Menor a mayor</option>
+                  <option value="desc">Precio: Mayor a menor</option>
+                </select>
+              </div>
 
               <a
                 href="/properties/new"
@@ -223,181 +286,207 @@ export default function PropertiesPage() {
             </div>
 
             <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 text-[18px] text-slate-400">
-                <div className="flex items-center gap-4">
-                  <span>
-                    <span className="font-semibold text-slate-700">
-                      Propiedades
-                    </span>{" "}
-                    {properties.length} registradas
-                  </span>
-                </div>
+  <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 text-[18px] text-slate-400">
+    <div className="flex items-center gap-4">
+      <span>
+        <span className="font-semibold text-slate-700">Propiedades</span>{" "}
+        {filteredProperties.length} registradas
+      </span>
+    </div>
 
-                <button className="font-medium text-slate-500 transition hover:text-slate-700">
-                  Limpiar filtros
-                </button>
-              </div>
+    <button
+      onClick={clearFilters}
+      className="font-medium text-slate-500 transition hover:text-slate-700"
+    >
+      Limpiar filtros
+    </button>
+  </div>
 
-              <div className="hidden overflow-x-auto lg:block">
-                <table className="w-full min-w-[980px]">
-                  <thead className="bg-[#fafbfc]">
-                    <tr className="border-b border-slate-200 text-left text-[16px] text-slate-500">
-                      <th className="px-6 py-4 font-semibold">ID</th>
-                      <th className="px-6 py-4 font-semibold">Propiedad</th>
-                      <th className="px-6 py-4 font-semibold">Tipo</th>
-                      <th className="px-6 py-4 font-semibold">Ubicación</th>
-                      <th className="px-6 py-4 font-semibold">Precio</th>
-                      <th className="px-6 py-4 font-semibold">Estado</th>
-                      <th className="px-6 py-4 font-semibold">Interesados</th>
-                      <th className="px-6 py-4 font-semibold">Acciones</th>
-                    </tr>
-                  </thead>
+  {filteredProperties.length === 0 ? (
+    <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-4xl">
+        🏠
+      </div>
 
-                  <tbody>
-                    {properties.map((property) => (
-                      <tr
-                        key={property.id}
-                        className="border-b border-slate-100 text-[17px] text-slate-700"
-                      >
-                        <td className="px-6 py-5 text-slate-500">
-                          {property.id}
-                        </td>
+      <h2 className="text-2xl font-semibold text-slate-800">
+        {properties.length === 0
+          ? "Aún no hay propiedades registradas"
+          : "No se encontraron propiedades"}
+      </h2>
 
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-4">
-                            <div className="relative h-[52px] w-[102px] overflow-hidden rounded-xl bg-slate-200">
-                              <Image
-                                src="/bg-login.png"
-                                alt={property.title}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <span className="font-medium text-slate-800">
-                              {property.title}
-                            </span>
-                          </div>
-                        </td>
+      <p className="mt-3 max-w-xl text-[17px] text-slate-500">
+        {properties.length === 0
+          ? "Empieza agregando tu primera propiedad para visualizarla aquí y administrarla dentro del sistema."
+          : "Prueba cambiando la búsqueda o limpiando los filtros para ver más resultados."}
+      </p>
 
-                        <td className="px-6 py-5 text-slate-500">
-                          {property.type}
-                        </td>
+      {properties.length === 0 && (
+        <a
+          href="/properties/new"
+          className="mt-6 rounded-2xl bg-[#8bb58f] px-6 py-3 text-[17px] font-semibold text-white transition hover:opacity-90"
+        >
+          + Crear primera propiedad
+        </a>
+      )}
+    </div>
+  ) : (
+    <>
+      <div className="hidden overflow-x-auto lg:block">
+        <table className="w-full min-w-[980px]">
+          <thead className="bg-[#fafbfc]">
+            <tr className="border-b border-slate-200 text-left text-[16px] text-slate-500">
+              <th className="px-6 py-4 font-semibold">ID</th>
+              <th className="px-6 py-4 font-semibold">Propiedad</th>
+              <th className="px-6 py-4 font-semibold">Tipo</th>
+              <th className="px-6 py-4 font-semibold">Ubicación</th>
+              <th className="px-6 py-4 font-semibold">Precio</th>
+              <th className="px-6 py-4 font-semibold">Estado</th>
+              <th className="px-6 py-4 font-semibold">Interesados</th>
+              <th className="px-6 py-4 font-semibold">Acciones</th>
+            </tr>
+          </thead>
 
-                        <td className="px-6 py-5 text-slate-500">
-                          {property.location}
-                        </td>
+          <tbody>
+            {filteredProperties.map((property) => (
+              <tr
+                key={property.id}
+                className="border-b border-slate-100 text-[17px] text-slate-700"
+              >
+                <td className="px-6 py-5 text-slate-500">{property.id}</td>
 
-                        <td className="px-6 py-5 font-medium text-slate-800">
-                          Q{property.price.toLocaleString()}
-                        </td>
-
-                        <td className="px-6 py-5">
-                          <span
-                            className={`inline-flex rounded-full px-4 py-2 text-[15px] font-semibold ${getStatusClasses(
-                              property.status
-                            )}`}
-                          >
-                            {property.status}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-5 text-center text-slate-600">
-                          {property.interested}
-                        </td>
-
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-6 text-slate-500">
-                            <a
-                              href={`/properties/${property.id}`}
-                              className="transition hover:text-slate-800"
-                            >
-                              👁 Ver
-                            </a>
-                            <a
-                              href={`/properties/edit/${property.id}`}
-                              className="transition hover:text-slate-800"
-                            >
-                              ✎ Editar
-                            </a>
-                            <button
-                              onClick={() => handleDelete(property.id, property.title)}
-                              className="transition hover:text-red-600"
-                            >
-                              🗑 Eliminar
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="space-y-4 p-4 lg:hidden">
-                {properties.map((property) => (
-                  <div
-                    key={property.id}
-                    className="rounded-2xl border border-slate-200 p-4"
-                  >
-                    <div className="flex gap-4">
-                      <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-200">
-                        <Image
-                          src="/bg-login.png"
-                          alt={property.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-slate-400">ID {property.id}</p>
-                        <h3 className="truncate text-lg font-semibold text-slate-800">
-                          {property.title}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {property.location}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {property.type}
-                        </p>
-                        <p className="mt-2 font-semibold text-slate-800">
-                          Q{property.price.toLocaleString()}
-                        </p>
-                        <span
-                          className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusClasses(
-                            property.status
-                          )}`}
-                        >
-                          {property.status}
-                        </span>
-                      </div>
+                <td className="px-6 py-5">
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-[52px] w-[102px] overflow-hidden rounded-xl bg-slate-200">
+                      <Image
+                        src="/bg-login.png"
+                        alt={property.title}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-
-                    <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
-                      <span>Interesados: {property.interested}</span>
-                      <div className="flex gap-4">
-                        <a href={`/properties/${property.id}`}>Ver</a>
-                        <a href={`/properties/edit/${property.id}`}>Editar</a>
-                        <button
-                          onClick={() => handleDelete(property.id, property.title)}
-                          className="text-red-600"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </div>
+                    <span className="font-medium text-slate-800">
+                      {property.title}
+                    </span>
                   </div>
-                ))}
+                </td>
+
+                <td className="px-6 py-5 text-slate-500">{property.type}</td>
+
+                <td className="px-6 py-5 text-slate-500">
+                  {property.location}
+                </td>
+
+                <td className="px-6 py-5 font-medium text-slate-800">
+                  Q{property.price.toLocaleString()}
+                </td>
+
+                <td className="px-6 py-5">
+                  <span
+                    className={`inline-flex rounded-full px-4 py-2 text-[15px] font-semibold ${getStatusClasses(
+                      property.status
+                    )}`}
+                  >
+                    {property.status}
+                  </span>
+                </td>
+
+                <td className="px-6 py-5 text-center text-slate-600">
+                  {property.interested}
+                </td>
+
+                <td className="px-6 py-5">
+                  <div className="flex items-center gap-6 text-slate-500">
+                    <a
+                      href={`/properties/${property.id}`}
+                      className="transition hover:text-slate-800"
+                    >
+                      👁 Ver
+                    </a>
+                    <a
+                      href={`/properties/edit/${property.id}`}
+                      className="transition hover:text-slate-800"
+                    >
+                      ✎ Editar
+                    </a>
+                    <button
+                      onClick={() => handleDelete(property.id, property.title)}
+                      className="transition hover:text-red-600"
+                    >
+                      🗑 Eliminar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="space-y-4 p-4 lg:hidden">
+       {filteredProperties.map((property) => (
+          <div
+            key={property.id}
+            className="rounded-2xl border border-slate-200 p-4"
+          >
+            <div className="flex gap-4">
+              <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-200">
+                <Image
+                  src="/bg-login.png"
+                  alt={property.title}
+                  fill
+                  className="object-cover"
+                />
               </div>
 
-              <div className="flex items-center justify-end gap-3 px-6 py-5">
-                <button className="text-lg text-slate-400">‹</button>
-                <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8bb58f] font-semibold text-white">
-                  1
-                </button>
-                <button className="text-lg text-slate-400">›</button>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-slate-400">ID {property.id}</p>
+                <h3 className="truncate text-lg font-semibold text-slate-800">
+                  {property.title}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {property.location}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">{property.type}</p>
+                <p className="mt-2 font-semibold text-slate-800">
+                  Q{property.price.toLocaleString()}
+                </p>
+                <span
+                  className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusClasses(
+                    property.status
+                  )}`}
+                >
+                  {property.status}
+                </span>
               </div>
             </div>
+
+            <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
+              <span>Interesados: {property.interested}</span>
+              <div className="flex gap-4">
+                <a href={`/properties/${property.id}`}>Ver</a>
+                <a href={`/properties/edit/${property.id}`}>Editar</a>
+                <button
+                  onClick={() => handleDelete(property.id, property.title)}
+                  className="text-red-600"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-end gap-3 px-6 py-5">
+        <button className="text-lg text-slate-400">‹</button>
+        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8bb58f] font-semibold text-white">
+          1
+        </button>
+        <button className="text-lg text-slate-400">›</button>
+      </div>
+    </>
+  )}
+</div>
           </div>
         </section>
       </div>

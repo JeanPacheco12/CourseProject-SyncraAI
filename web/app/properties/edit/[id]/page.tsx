@@ -65,22 +65,27 @@ export default function EditPropertyPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!form.title || !form.location || !form.price) {
-      alert("Completa los campos obligatorios");
+    const title = form.title.trim();
+    const type = form.type.trim();
+    const location = form.location.trim();
+    const price = Number(form.price);
+
+    if (!title || !type || !location || !form.price) {
+      alert("Título, tipo, ubicación y precio son obligatorios");
       return;
     }
 
-    if (Number(form.price) <= 0) {
-      alert("El precio debe ser mayor a 0");
+    if (Number.isNaN(price) || price <= 0) {
+      alert("El precio debe ser un número mayor a 0");
       return;
     }
 
     try {
       await updateDoc(doc(db, "properties", id), {
-        title: form.title,
-        type: form.type,
-        location: form.location,
-        price: Number(form.price),
+        title,
+        type,
+        location,
+        price,
         status: form.status,
       });
 

@@ -17,26 +17,40 @@ export default function NewPropertyPage() {
     interested: 0,
   });
 
-  const handleChange = (e: any) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // 🔥 validación básica
-    if (!form.title || !form.price || !form.location) {
-      alert("Completa los campos obligatorios");
+    const title = form.title.trim();
+    const type = form.type.trim();
+    const location = form.location.trim();
+    const price = Number(form.price);
+
+    if (!title || !type || !location || !form.price) {
+      alert("Título, tipo, ubicación y precio son obligatorios");
+      return;
+    }
+
+    if (Number.isNaN(price) || price <= 0) {
+      alert("El precio debe ser un número mayor a 0");
       return;
     }
 
     try {
       await addDoc(collection(db, "properties"), {
-        ...form,
-        price: Number(form.price),
+        title,
+        type,
+        location,
+        price,
+        status: form.status,
         interested: 0,
         createdAt: new Date(),
       });
@@ -44,34 +58,37 @@ export default function NewPropertyPage() {
       alert("Propiedad creada correctamente");
       router.push("/properties");
     } catch (error) {
-      console.error(error);
+      console.error("Error al crear propiedad:", error);
       alert("Error al crear propiedad");
     }
   };
 
   return (
     <main className="p-10">
-      <h1 className="text-3xl font-bold mb-6">Nueva propiedad</h1>
+      <h1 className="mb-6 text-3xl font-bold">Nueva propiedad</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
+      <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
         <input
           name="title"
           placeholder="Título"
-          className="w-full border p-3 rounded"
+          className="w-full rounded border p-3"
+          value={form.title}
           onChange={handleChange}
         />
 
         <input
           name="type"
           placeholder="Tipo (Casa, Cabaña...)"
-          className="w-full border p-3 rounded"
+          className="w-full rounded border p-3"
+          value={form.type}
           onChange={handleChange}
         />
 
         <input
           name="location"
           placeholder="Ubicación"
-          className="w-full border p-3 rounded"
+          className="w-full rounded border p-3"
+          value={form.location}
           onChange={handleChange}
         />
 
@@ -79,13 +96,15 @@ export default function NewPropertyPage() {
           name="price"
           placeholder="Precio"
           type="number"
-          className="w-full border p-3 rounded"
+          className="w-full rounded border p-3"
+          value={form.price}
           onChange={handleChange}
         />
 
         <select
           name="status"
-          className="w-full border p-3 rounded"
+          className="w-full rounded border p-3"
+          value={form.status}
           onChange={handleChange}
         >
           <option>Disponible</option>
@@ -94,7 +113,7 @@ export default function NewPropertyPage() {
           <option>Visitas</option>
         </select>
 
-        <button className="bg-[#8bb58f] text-white px-6 py-3 rounded">
+        <button className="rounded bg-[#8bb58f] px-6 py-3 text-white">
           Guardar
         </button>
       </form>
