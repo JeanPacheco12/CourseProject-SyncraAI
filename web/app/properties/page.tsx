@@ -1,88 +1,19 @@
-import Image from "next/image";
+"use client";
 
-const properties = [
-  {
-    id: 254,
-    image: "/bg-login.png",
-    name: "Casa en Polanco",
-    zone: "Polanco",
-    price: "$1,250,000",
-    status: "Disponible",
-    interested: 5,
-  },
-  {
-    id: 253,
-    image: "/bg-login.png",
-    name: "Depto. en Condesa",
-    zone: "Condesa",
-    price: "$850,000",
-    status: "Reservado",
-    interested: 3,
-  },
-  {
-    id: 252,
-    image: "/bg-login.png",
-    name: "Villa en Tulum",
-    zone: "Tulum",
-    price: "$3,350,000",
-    status: "Vendido",
-    interested: 7,
-  },
-  {
-    id: 251,
-    image: "/bg-login.png",
-    name: "Casa en Las Lomas",
-    zone: "Las Lomas",
-    price: "$2,950,000",
-    status: "Disponible",
-    interested: 6,
-  },
-  {
-    id: 250,
-    image: "/bg-login.png",
-    name: "Casa en San Ángel",
-    zone: "San Ángel",
-    price: "$1,475,000",
-    status: "Disponible",
-    interested: 4,
-  },
-  {
-    id: 258,
-    image: "/bg-login.png",
-    name: "Terreno en Cancún",
-    zone: "Cancún",
-    price: "$980,000",
-    status: "Disponible",
-    interested: 9,
-  },
-  {
-    id: 257,
-    image: "/bg-login.png",
-    name: "Penthouse en Santa Fe",
-    zone: "Santa Fe",
-    price: "$2,200,000",
-    status: "Reservado",
-    interested: 2,
-  },
-  {
-    id: 249,
-    image: "/bg-login.png",
-    name: "Residencia en Bosques",
-    zone: "Bosques",
-    price: "$5,200,000",
-    status: "Disponible",
-    interested: 7,
-  },
-  {
-    id: 248,
-    image: "/bg-login.png",
-    name: "Depto. en Narvarte",
-    zone: "Narvarte",
-    price: "$725,000",
-    status: "Disponible",
-    interested: 1,
-  },
-];
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+type Property = {
+  id: string;
+  title: string;
+  type: string;
+  location: string;
+  price: number;
+  status: string;
+  interested: number;
+};
 
 function getStatusClasses(status: string) {
   switch (status) {
@@ -92,16 +23,38 @@ function getStatusClasses(status: string) {
       return "bg-amber-100 text-amber-700";
     case "Vendido":
       return "bg-slate-200 text-slate-600";
+    case "Visitas":
+      return "bg-sky-100 text-sky-700";
     default:
       return "bg-slate-100 text-slate-600";
   }
 }
 
 export default function PropertiesPage() {
+  const [properties, setProperties] = useState<Property[]>([]);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "properties"));
+
+        const data: Property[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Property, "id">),
+        }));
+
+        setProperties(data);
+      } catch (error) {
+        console.error("Error al obtener propiedades:", error);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
       <div className="flex min-h-screen">
-        {/* Sidebar */}
         <aside className="hidden w-[290px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
           <div className="border-b border-slate-100 px-8 py-10">
             <Image
@@ -177,9 +130,7 @@ export default function PropertiesPage() {
           </div>
         </aside>
 
-        {/* Main content */}
         <section className="flex-1">
-          {/* Top header */}
           <header className="border-b border-slate-200 bg-[#f6f7fb] px-8 py-7">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
@@ -219,9 +170,7 @@ export default function PropertiesPage() {
             </div>
           </header>
 
-          {/* Filters + table */}
           <div className="px-8 py-6">
-            {/* Filters */}
             <div className="mb-6 flex flex-col gap-4 xl:flex-row">
               <div className="flex h-14 flex-1 items-center rounded-2xl border border-slate-200 bg-white px-5">
                 <span className="mr-3 text-xl text-slate-400">⌕</span>
@@ -235,14 +184,14 @@ export default function PropertiesPage() {
               <button className="flex h-14 min-w-[250px] items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 text-[18px] text-slate-500">
                 <span>
                   <span className="font-semibold text-slate-700">Estado</span>{" "}
-                  Disponible
+                  Todos
                 </span>
                 <span>⌄</span>
               </button>
 
               <button className="flex h-14 min-w-[250px] items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 text-[18px] text-slate-500">
                 <span>
-                  <span className="font-semibold text-slate-700">Zona</span>{" "}
+                  <span className="font-semibold text-slate-700">Ubicación</span>{" "}
                   Todas
                 </span>
                 <span>⌄</span>
@@ -253,17 +202,14 @@ export default function PropertiesPage() {
               </button>
             </div>
 
-            {/* Table card */}
             <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm">
-              {/* Table header top */}
               <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 text-[18px] text-slate-400">
                 <div className="flex items-center gap-4">
-                  <span className="font-semibold text-slate-700">ID -</span>
                   <span>
                     <span className="font-semibold text-slate-700">
-                      Propiedad
+                      Propiedades
                     </span>{" "}
-                    1 - 10 de 54 propiedades
+                    {properties.length} registradas
                   </span>
                 </div>
 
@@ -272,14 +218,14 @@ export default function PropertiesPage() {
                 </button>
               </div>
 
-              {/* Desktop table */}
               <div className="hidden overflow-x-auto lg:block">
                 <table className="w-full min-w-[980px]">
                   <thead className="bg-[#fafbfc]">
                     <tr className="border-b border-slate-200 text-left text-[16px] text-slate-500">
                       <th className="px-6 py-4 font-semibold">ID</th>
                       <th className="px-6 py-4 font-semibold">Propiedad</th>
-                      <th className="px-6 py-4 font-semibold">Zona</th>
+                      <th className="px-6 py-4 font-semibold">Tipo</th>
+                      <th className="px-6 py-4 font-semibold">Ubicación</th>
                       <th className="px-6 py-4 font-semibold">Precio</th>
                       <th className="px-6 py-4 font-semibold">Estado</th>
                       <th className="px-6 py-4 font-semibold">Interesados</th>
@@ -290,7 +236,7 @@ export default function PropertiesPage() {
                   <tbody>
                     {properties.map((property) => (
                       <tr
-                        key={`${property.id}-${property.name}`}
+                        key={property.id}
                         className="border-b border-slate-100 text-[17px] text-slate-700"
                       >
                         <td className="px-6 py-5 text-slate-500">
@@ -301,24 +247,28 @@ export default function PropertiesPage() {
                           <div className="flex items-center gap-4">
                             <div className="relative h-[52px] w-[102px] overflow-hidden rounded-xl bg-slate-200">
                               <Image
-                                src={property.image}
-                                alt={property.name}
+                                src="/bg-login.png"
+                                alt={property.title}
                                 fill
                                 className="object-cover"
                               />
                             </div>
                             <span className="font-medium text-slate-800">
-                              {property.name}
+                              {property.title}
                             </span>
                           </div>
                         </td>
 
                         <td className="px-6 py-5 text-slate-500">
-                          {property.zone}
+                          {property.type}
+                        </td>
+
+                        <td className="px-6 py-5 text-slate-500">
+                          {property.location}
                         </td>
 
                         <td className="px-6 py-5 font-medium text-slate-800">
-                          {property.price}
+                          Q{property.price.toLocaleString()}
                         </td>
 
                         <td className="px-6 py-5">
@@ -351,18 +301,17 @@ export default function PropertiesPage() {
                 </table>
               </div>
 
-              {/* Mobile cards */}
               <div className="space-y-4 p-4 lg:hidden">
                 {properties.map((property) => (
                   <div
-                    key={`${property.id}-${property.name}-mobile`}
+                    key={property.id}
                     className="rounded-2xl border border-slate-200 p-4"
                   >
                     <div className="flex gap-4">
                       <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-200">
                         <Image
-                          src={property.image}
-                          alt={property.name}
+                          src="/bg-login.png"
+                          alt={property.title}
                           fill
                           className="object-cover"
                         />
@@ -371,13 +320,16 @@ export default function PropertiesPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-slate-400">ID {property.id}</p>
                         <h3 className="truncate text-lg font-semibold text-slate-800">
-                          {property.name}
+                          {property.title}
                         </h3>
                         <p className="mt-1 text-sm text-slate-500">
-                          {property.zone}
+                          {property.location}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {property.type}
                         </p>
                         <p className="mt-2 font-semibold text-slate-800">
-                          {property.price}
+                          Q{property.price.toLocaleString()}
                         </p>
                         <span
                           className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusClasses(
@@ -400,17 +352,10 @@ export default function PropertiesPage() {
                 ))}
               </div>
 
-              {/* Pagination */}
               <div className="flex items-center justify-end gap-3 px-6 py-5">
                 <button className="text-lg text-slate-400">‹</button>
                 <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8bb58f] font-semibold text-white">
                   1
-                </button>
-                <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 font-semibold text-slate-500">
-                  2
-                </button>
-                <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 font-semibold text-slate-500">
-                  3
                 </button>
                 <button className="text-lg text-slate-400">›</button>
               </div>

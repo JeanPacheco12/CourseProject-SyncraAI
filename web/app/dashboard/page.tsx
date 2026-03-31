@@ -8,6 +8,7 @@ import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
+import Link from "next/link";
 import {
   Bell,
   ChevronDown,
@@ -159,6 +160,10 @@ export default function DashboardPage() {
   const nombre = userProfile?.nombre || "Usuario";
   const apellido = userProfile?.apellido || "";
   const nombreCompleto = `${nombre} ${apellido}`.trim() || "Usuario";
+  const totalInterested = properties.reduce(
+  (sum, property) => sum + property.interested,
+  0
+  );
 
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
@@ -185,10 +190,12 @@ export default function DashboardPage() {
               label="Dashboard"
               active
             />
-            <SidebarItem
-              icon={<Grid2x2 className="h-5 w-5" />}
-              label="Inmuebles"
-            />
+            <Link href="/properties">
+              <SidebarItem
+                icon={<Grid2x2 className="h-5 w-5" />}
+                label="Propiedades"
+              />
+            </Link>
             <SidebarItem
               icon={<User className="h-5 w-5" />}
               label="Contactos"
@@ -295,16 +302,16 @@ export default function DashboardPage() {
                 change="12.5%"
               />
               <StatCard
-                icon={<CalendarDays className="h-6 w-6 text-sky-600" />}
-                title="Citas agendadas"
-                value="12"
-                change="3.4%"
+                icon={<Users className="h-6 w-6 text-sky-600" />}
+                title="Personas interesadas"
+                value={totalInterested.toString()}
+                change=""
               />
               <StatCard
-                icon={<Users className="h-6 w-6 text-sky-600" />}
-                title="Nuevos clientes"
-                value="21"
-                change="15"
+                icon={<Home className="h-6 w-6 text-sky-600" />}
+                title="Propiedades registradas"
+                value={properties.length.toString()}
+                change=""
               />
               <StatCard
                 icon={<Check className="h-6 w-6 text-emerald-600" />}
