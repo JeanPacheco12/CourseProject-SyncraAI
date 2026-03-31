@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 type Property = {
@@ -33,24 +33,41 @@ function getStatusClasses(status: string) {
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
 
+  const fetchProperties = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "properties"));
+
+      const data: Property[] = snapshot.docs.map((docItem) => ({
+        id: docItem.id,
+        ...(docItem.data() as Omit<Property, "id">),
+      }));
+
+      setProperties(data);
+    } catch (error) {
+      console.error("Error al obtener propiedades:", error);
+    }
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    const confirmed = window.confirm(
+      `¿Seguro que deseas eliminar la propiedad "${title}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "properties", id));
+      await fetchProperties();
+      alert("Propiedad eliminada correctamente");
+    } catch (error) {
+      console.error("Error al eliminar propiedad:", error);
+      alert("No se pudo eliminar la propiedad");
+    }
+  };
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "properties"));
-
-        const data: Property[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Property, "id">),
-        }));
-
-        setProperties(data);
-      } catch (error) {
-        console.error("Error al obtener propiedades:", error);
-      }
-    };
-
     fetchProperties();
   }, []);
+  
 
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
@@ -197,9 +214,12 @@ export default function PropertiesPage() {
                 <span>⌄</span>
               </button>
 
-              <button className="h-14 rounded-2xl bg-[#8bb58f] px-8 text-[18px] font-semibold text-white transition hover:opacity-90">
+              <a
+                href="/properties/new"
+                className="flex h-14 min-w-[250px] items-center justify-center rounded-2xl bg-[#8bb58f] px-8 text-[18px] font-semibold text-white hover:opacity-90"
+              >
                 + Nuevo inmueble
-              </button>
+              </a>
             </div>
 
             <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm">
@@ -290,8 +310,17 @@ export default function PropertiesPage() {
                             <button className="transition hover:text-slate-800">
                               👁 Ver
                             </button>
-                            <button className="transition hover:text-slate-800">
+                            <a
+                              href={`/properties/edit/${property.id}`}
+                              className="transition hover:text-slate-800"
+                            >
                               ✎ Editar
+                            </a>
+                            <button
+                              onClick={() => handleDelete(property.id, property.title)}
+                              className="transition hover:text-red-600"
+                            >
+                              🗑 Eliminar
                             </button>
                           </div>
                         </td>
@@ -345,7 +374,13 @@ export default function PropertiesPage() {
                       <span>Interesados: {property.interested}</span>
                       <div className="flex gap-4">
                         <button>Ver</button>
-                        <button>Editar</button>
+                        <a href={`/properties/edit/${property.id}`}>Editar</a>
+                        <button
+                          onClick={() => handleDelete(property.id, property.title)}
+                          className="text-red-600"
+                        >
+                          Eliminar
+                        </button>
                       </div>
                     </div>
                   </div>
