@@ -196,10 +196,12 @@ export default function DashboardPage() {
                 label="Propiedades"
               />
             </Link>
-            <SidebarItem
-              icon={<User className="h-5 w-5" />}
-              label="Contactos"
-            />
+            <Link href="/contacts">
+              <SidebarItem
+                icon={<User className="h-5 w-5" />}
+                label="Contactos"
+              />
+            </Link>
             <SidebarItem
               icon={<ClipboardList className="h-5 w-5" />}
               label="Citas"

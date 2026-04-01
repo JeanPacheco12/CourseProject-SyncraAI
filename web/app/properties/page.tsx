@@ -138,7 +138,7 @@ export default function PropertiesPage() {
             </a>
 
             <a
-              href="#"
+              href="/contacts"
               className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 transition hover:bg-slate-50"
             >
               <span className="text-xl">◌</span>

@@ -1,43 +1,17 @@
-import Image from "next/image";
+"use client";
 
-const contacts = [
-  {
-    id: 1,
-    name: "José Martínez",
-    email: "jose@email.com",
-    phone: "+502 5555 5555",
-    city: "Ciudad de Guatemala",
-    status: "Interesado",
-    image: "/google.png",
-  },
-  {
-    id: 2,
-    name: "Ana López",
-    email: "ana@email.com",
-    phone: "+502 7777 2222",
-    city: "Antigua Guatemala",
-    status: "Nuevo",
-    image: "/google.png",
-  },
-  {
-    id: 3,
-    name: "Carlos Díaz",
-    email: "carlos@email.com",
-    phone: "+502 8888 1111",
-    city: "Zona 10",
-    status: "Negociando",
-    image: "/google.png",
-  },
-  {
-    id: 4,
-    name: "María Torres",
-    email: "maria@email.com",
-    phone: "+502 4444 8888",
-    city: "Zona 15",
-    status: "Interesado",
-    image: "/google.png",
-  },
-];
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+
+type Client = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  interest: string;
+};
 
 function getStatusClasses(status: string) {
   switch (status) {
@@ -53,6 +27,30 @@ function getStatusClasses(status: string) {
 }
 
 export default function ContactsPage() {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "clients"));
+
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Client, "id">),
+        }));
+
+        setClients(data);
+      } catch (error) {
+        console.error("Error cargando clientes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClients();
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
       <div className="flex min-h-screen">
@@ -69,52 +67,22 @@ export default function ContactsPage() {
           </div>
 
           <nav className="flex-1 space-y-2 px-4 py-6">
-            <a
-              href="/dashboard"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50"
-            >
+            <a href="/dashboard" className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50">
               ⌂ Dashboard
             </a>
 
-            <a
-              href="/properties"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50"
-            >
+            <a href="/properties" className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50">
               ⊞ Inmuebles
             </a>
 
-            <a
-              href="/contacts"
-              className="flex items-center gap-4 rounded-2xl bg-slate-50 px-5 py-4 text-[18px] font-medium text-slate-800"
-            >
+            <a href="/contacts" className="flex items-center gap-4 rounded-2xl bg-slate-50 px-5 py-4 text-[18px] font-medium text-slate-800">
               ◌ Contactos
-            </a>
-
-            <a
-              href="#"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50"
-            >
-              ☷ Citas
-            </a>
-
-            <a
-              href="#"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50"
-            >
-              ↗ Reportes
-            </a>
-            <a
-              href="#"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50"
-            >
-               ⚙ Ajustes
             </a>
           </nav>
         </aside>
 
         {/* Content */}
         <section className="flex-1">
-          {/* Header */}
           <header className="border-b border-slate-200 px-8 py-7">
             <h1 className="text-5xl font-semibold">Contactos</h1>
             <p className="mt-2 text-lg text-slate-500">
@@ -122,9 +90,8 @@ export default function ContactsPage() {
             </p>
           </header>
 
-          {/* Body */}
           <div className="px-8 py-6">
-            {/* Search */}
+            {/* Search + Button */}
             <div className="mb-6 flex gap-4">
               <input
                 type="text"
@@ -132,66 +99,68 @@ export default function ContactsPage() {
                 className="h-12 w-full rounded-xl border border-slate-200 px-4"
               />
 
-              <button className="rounded-xl bg-[#8bb58f] px-6 text-white font-semibold">
+              <a
+                href="/contacts/new"
+                className="rounded-xl bg-[#8bb58f] px-6 text-white font-semibold flex items-center"
+              >
                 + Nuevo cliente
-              </button>
+              </a>
             </div>
 
-            {/* Table */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <table className="w-full">
-                <thead className="bg-slate-50 text-left">
-                  <tr>
-                    <th className="px-6 py-4">Cliente</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Ciudad</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {contacts.map((contact) => (
-                    <tr key={contact.id} className="border-t">
-                      <td className="px-6 py-4 flex items-center gap-3">
-                        <Image
-                          src={contact.image}
-                          alt={contact.name}
-                          width={40}
-                          height={40}
-                          className="rounded-full"
-                        />
-                        <span className="font-medium">{contact.name}</span>
-                      </td>
-
-                      <td>{contact.email}</td>
-                      <td>{contact.phone}</td>
-                      <td>{contact.city}</td>
-
-                      <td>
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusClasses(
-                            contact.status
-                          )}`}
-                        >
-                          {contact.status}
-                        </span>
-                      </td>
-
-                      <td>
-                        <a
-                          href="/client-profile"
-                          className="text-emerald-700 font-semibold hover:underline"
-                        >
-                          Ver perfil
-                        </a>
-                      </td>
+            {/* Loading */}
+            {loading ? (
+              <p>Cargando clientes...</p>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <table className="w-full">
+                  <thead className="bg-slate-50 text-left">
+                    <tr>
+                      <th className="px-6 py-4">Cliente</th>
+                      <th>Email</th>
+                      <th>Teléfono</th>
+                      <th>Interés</th>
+                      <th>Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+
+                  <tbody>
+                    {clients.map((client) => (
+                      <tr key={client.id} className="border-t">
+                        <td className="px-6 py-4 flex items-center gap-3">
+                          <Image
+                            src="/google.png"
+                            alt={client.name}
+                            width={40}
+                            height={40}
+                            className="rounded-full"
+                          />
+                          <span className="font-medium">{client.name}</span>
+                        </td>
+
+                        <td>{client.email}</td>
+                        <td>{client.phone}</td>
+                        <td>{client.interest}</td>
+
+                        <td>
+                          <a
+                            href={`/contacts/edit/${client.id}`}
+                            className="text-emerald-700 font-semibold hover:underline"
+                          >
+                            Editar
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {clients.length === 0 && (
+                  <p className="p-6 text-slate-500">
+                    No hay clientes registrados aún.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </section>
       </div>
