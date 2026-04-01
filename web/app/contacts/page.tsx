@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 
 type Client = {
   id: string;
@@ -50,6 +50,20 @@ export default function ContactsPage() {
 
     fetchClients();
   }, []);
+  const handleDelete = async (id: string) => {
+  const confirmed = window.confirm("¿Seguro que deseas eliminar este cliente?");
+
+  if (!confirmed) return;
+
+  try {
+    await deleteDoc(doc(db, "clients", id));
+
+    setClients((prev) => prev.filter((client) => client.id !== id));
+  } catch (error) {
+    console.error("Error eliminando cliente:", error);
+    alert("No se pudo eliminar el cliente");
+  }
+};
 
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
@@ -141,13 +155,21 @@ export default function ContactsPage() {
                         <td>{client.phone}</td>
                         <td>{client.interest}</td>
 
-                        <td>
-                          <a
-                            href={`/contacts/edit/${client.id}`}
-                            className="text-emerald-700 font-semibold hover:underline"
-                          >
-                            Editar
-                          </a>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-6 text-slate-500">
+                            <a
+                              href={`/properties/edit/${client.id}`}
+                              className="transition hover:text-slate-800"
+                            >
+                              ✎ Editar
+                            </a>
+                            <button
+                              onClick={() => handleDelete(client.id)}
+                              className="transition hover:text-red-600"
+                            >
+                              🗑 Eliminar
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

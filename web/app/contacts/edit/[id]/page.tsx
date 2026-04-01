@@ -2,41 +2,49 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { addDoc, collection, getDocs } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useParams, useRouter } from "next/navigation";
 
-type Property = {
-  id: string;
-  title: string;
-};
-
-export default function NewClientPage() {
+export default function EditClientPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [interest, setInterest] = useState("");
-  const [propertyId, setPropertyId] = useState("");
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchClient = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "properties"));
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          title: (doc.data().title as string) || "Sin título",
-        }));
-        setProperties(data);
+        const ref = doc(db, "clients", id);
+        const snapshot = await getDoc(ref);
+
+        if (!snapshot.exists()) {
+          alert("El cliente no existe");
+          router.push("/contacts");
+          return;
+        }
+
+        const data = snapshot.data();
+        setName(data.name || "");
+        setEmail(data.email || "");
+        setPhone(data.phone || "");
+        setInterest(data.interest || "");
       } catch (error) {
-        console.error("Error cargando propiedades:", error);
+        console.error("Error cargando cliente:", error);
+        alert("No se pudo cargar el cliente");
+        router.push("/contacts");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProperties();
-  }, []);
+    if (id) fetchClient();
+  }, [id, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,25 +55,28 @@ export default function NewClientPage() {
     }
 
     try {
-      setLoading(true);
+      setSaving(true);
 
-      await addDoc(collection(db, "clients"), {
+      await updateDoc(doc(db, "clients", id), {
         name,
         email,
         phone,
         interest,
-        propertyId: propertyId || "",
       });
 
-      alert("Cliente creado correctamente");
+      alert("Cliente actualizado correctamente");
       router.push("/contacts");
     } catch (error) {
-      console.error(error);
-      alert("Error al crear cliente");
+      console.error("Error actualizando cliente:", error);
+      alert("No se pudo actualizar el cliente");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return <main className="p-8">Cargando cliente...</main>;
+  }
 
   return (
     <main className="min-h-screen bg-[#f6f7fb] p-8">
@@ -78,7 +89,7 @@ export default function NewClientPage() {
         </button>
 
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
-          <h1 className="mb-6 text-3xl font-semibold">Nuevo Cliente</h1>
+          <h1 className="mb-6 text-3xl font-semibold">Editar Cliente</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
@@ -113,25 +124,12 @@ export default function NewClientPage() {
               onChange={(e) => setInterest(e.target.value)}
             />
 
-            <select
-              className="h-12 w-full rounded-xl border px-4"
-              value={propertyId}
-              onChange={(e) => setPropertyId(e.target.value)}
-            >
-              <option value="">Selecciona una propiedad</option>
-              {properties.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.title}
-                </option>
-              ))}
-            </select>
-
             <button
               type="submit"
-              disabled={loading}
+              disabled={saving}
               className="h-12 w-full rounded-xl bg-[#8bb58f] font-semibold text-white"
             >
-              {loading ? "Guardando..." : "Guardar Cliente"}
+              {saving ? "Guardando..." : "Guardar cambios"}
             </button>
           </form>
         </div>
