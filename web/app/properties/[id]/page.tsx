@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 
 type Property = {
@@ -13,7 +20,16 @@ type Property = {
   location: string;
   price: number;
   status: string;
-  interested: number;
+  interested?: number;
+};
+
+type Client = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  interest: string;
+  propertyId?: string;
 };
 
 function getStatusClasses(status: string) {
@@ -37,33 +53,48 @@ export default function PropertyDetailPage() {
   const id = params.id as string;
 
   const [property, setProperty] = useState<Property | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProperty = async () => {
+    const fetchPropertyAndClients = async () => {
       try {
-        const ref = doc(db, "properties", id);
-        const snapshot = await getDoc(ref);
+        const propertyRef = doc(db, "properties", id);
+        const propertySnapshot = await getDoc(propertyRef);
 
-        if (!snapshot.exists()) {
+        if (!propertySnapshot.exists()) {
           alert("La propiedad no existe");
           router.push("/properties");
           return;
         }
 
         setProperty({
-          id: snapshot.id,
-          ...(snapshot.data() as Omit<Property, "id">),
+          id: propertySnapshot.id,
+          ...(propertySnapshot.data() as Omit<Property, "id">),
         });
+
+        const clientsQuery = query(
+          collection(db, "clients"),
+          where("propertyId", "==", id)
+        );
+
+        const clientsSnapshot = await getDocs(clientsQuery);
+
+        const clientsData = clientsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Client, "id">),
+        }));
+
+        setClients(clientsData);
       } catch (error) {
-        console.error("Error al cargar propiedad:", error);
+        console.error("Error al cargar propiedad/clientes:", error);
         alert("No se pudo cargar la propiedad");
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) fetchProperty();
+    if (id) fetchPropertyAndClients();
   }, [id, router]);
 
   if (loading) {
@@ -150,9 +181,57 @@ export default function PropertyDetailPage() {
               <div className="rounded-2xl bg-slate-50 p-5">
                 <p className="text-sm text-slate-400">Interesados</p>
                 <p className="mt-2 text-lg font-semibold text-slate-800">
-                  {property.interested}
+                  {clients.length}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-10">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-slate-800">
+                  Clientes interesados
+                </h2>
+              </div>
+
+              {clients.length === 0 ? (
+                <div className="rounded-2xl bg-slate-50 p-5 text-slate-500">
+                  Aún no hay clientes interesados en esta propiedad.
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 text-left">
+                      <tr>
+                        <th className="px-6 py-4">Nombre</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Interés</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clients.map((client) => (
+                        <tr key={client.id} className="border-t">
+                          <td className="px-6 py-4 font-medium">
+                            {client.name}
+                          </td>
+                          <td>{client.email}</td>
+                          <td>{client.phone}</td>
+                          <td>{client.interest || "No definido"}</td>
+                          <td>
+                            <a
+                              href={`/contacts/edit/${client.id}`}
+                              className="font-semibold text-emerald-700 hover:underline"
+                            >
+                              Editar cliente
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>

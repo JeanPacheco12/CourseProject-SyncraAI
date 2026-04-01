@@ -4,6 +4,22 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
+import Link from "next/link";
+import {
+  Bell,
+  ChevronDown,
+  ClipboardList,
+  DollarSign,
+  Grid2x2,
+  Home,
+  LineChart,
+  Search,
+  Settings,
+  User,
+  Users,
+  CalendarDays,
+  Check,
+} from "lucide-react";
 
 type Client = {
   id: string;
@@ -12,6 +28,29 @@ type Client = {
   phone: string;
   interest: string;
 };
+
+function SidebarItem({
+  icon,
+  label,
+  active = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition ${
+        active
+          ? "bg-emerald-50 text-emerald-700"
+          : "text-slate-500 hover:bg-slate-100"
+      }`}
+    >
+      <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
+      <span>{label}</span>
+    </div>
+  );
+}
 
 function getStatusClasses(status: string) {
   switch (status) {
@@ -70,28 +109,53 @@ export default function ContactsPage() {
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside className="hidden w-[290px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
-          <div className="border-b border-slate-100 px-8 py-10">
-            <Image
-              src="/logo-syncra.png"
-              alt="Syncra"
-              width={190}
-              height={90}
-              className="h-auto w-auto"
+           <div className="flex flex-col items-center px-8 pb-8 pt-10">
+                      <div className="relative mb-5 h-[90px] w-[150px]">
+                        <Image
+                          src="/logo-syncra.png"
+                          alt="Syncra Estate AI"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+          
+                      <h2 className="text-[20px] font-semibold text-slate-800">
+                        Syncra Estate AI
+                      </h2>
+                    </div>
+
+          <nav className="flex-1 space-y-2 px-5">
+            <Link href="/dashboard">
+              <SidebarItem
+                icon={<Home className="h-5 w-5" />}
+                label="Dashboard"
+              />
+            </Link>
+            <Link href="/properties">
+              <SidebarItem
+                icon={<Grid2x2 className="h-5 w-5" />}
+                label="Propiedades"
+              />
+            </Link>
+            <Link href="/contacts">
+              <SidebarItem
+                icon={<User className="h-5 w-5" />}
+                label="Contactos"
+                active
+              />
+            </Link>
+            <SidebarItem
+              icon={<ClipboardList className="h-5 w-5" />}
+              label="Citas"
             />
-          </div>
-
-          <nav className="flex-1 space-y-2 px-4 py-6">
-            <a href="/dashboard" className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50">
-              ⌂ Dashboard
-            </a>
-
-            <a href="/properties" className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 hover:bg-slate-50">
-              ⊞ Inmuebles
-            </a>
-
-            <a href="/contacts" className="flex items-center gap-4 rounded-2xl bg-slate-50 px-5 py-4 text-[18px] font-medium text-slate-800">
-              ◌ Contactos
-            </a>
+            <SidebarItem
+              icon={<LineChart className="h-5 w-5" />}
+              label="Reportes"
+            />
+            <SidebarItem
+              icon={<Settings className="h-5 w-5" />}
+              label="Ajustes"
+            />
           </nav>
         </aside>
 

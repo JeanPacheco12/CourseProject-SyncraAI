@@ -4,6 +4,22 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Link from "next/link";
+import {
+  Bell,
+  ChevronDown,
+  ClipboardList,
+  DollarSign,
+  Grid2x2,
+  Home,
+  LineChart,
+  Search,
+  Settings,
+  User,
+  Users,
+  CalendarDays,
+  Check,
+} from "lucide-react";
 
 type Property = {
   id: string;
@@ -14,6 +30,37 @@ type Property = {
   status: string;
   interested: number;
 };
+
+type Client = {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  interest?: string;
+  propertyId?: string;
+};
+function SidebarItem({
+  icon,
+  label,
+  active = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition ${
+        active
+          ? "bg-emerald-50 text-emerald-700"
+          : "text-slate-500 hover:bg-slate-100"
+      }`}
+    >
+      <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
+      <span>{label}</span>
+    </div>
+  );
+}
 
 function getStatusClasses(status: string) {
   switch (status) {
@@ -37,14 +84,38 @@ export default function PropertiesPage() {
   const [locationFilter, setLocationFilter] = useState("Todas");
   const [priceOrder, setPriceOrder] = useState("default");
 
+  
   const fetchProperties = async () => {
     try {
-      const snapshot = await getDocs(collection(db, "properties"));
+      const propertiesSnapshot = await getDocs(collection(db, "properties"));
+      const clientsSnapshot = await getDocs(collection(db, "clients"));
 
-      const data: Property[] = snapshot.docs.map((docItem) => ({
-        id: docItem.id,
-        ...(docItem.data() as Omit<Property, "id">),
-      }));
+      const clientsData: Client[] = clientsSnapshot.docs.map((clientDoc) => {
+        const data = clientDoc.data() as Partial<Client>;
+
+        return {
+          id: clientDoc.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          interest: data.interest,
+          propertyId: data.propertyId,
+        };
+      });
+
+      const data: Property[] = propertiesSnapshot.docs.map((docItem) => {
+        const propertyData = docItem.data() as Omit<Property, "id" | "interested">;
+
+        const interestedCount = clientsData.filter((client) => {
+          return client.propertyId === docItem.id;
+        }).length;
+
+        return {
+          id: docItem.id,
+          ...propertyData,
+          interested: interestedCount,
+        };
+      });
 
       setProperties(data);
     } catch (error) {
@@ -110,64 +181,53 @@ export default function PropertiesPage() {
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
       <div className="flex min-h-screen">
         <aside className="hidden w-[290px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
-          <div className="border-b border-slate-100 px-8 py-10">
-            <Image
-              src="/logo-syncra.png"
-              alt="Syncra Estate AI"
-              width={190}
-              height={90}
-              className="h-auto w-auto"
+           <div className="flex flex-col items-center px-8 pb-8 pt-10">
+                      <div className="relative mb-5 h-[90px] w-[150px]">
+                        <Image
+                          src="/logo-syncra.png"
+                          alt="Syncra Estate AI"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+          
+                      <h2 className="text-[20px] font-semibold text-slate-800">
+                        Syncra Estate AI
+                      </h2>
+              </div>
+
+          <nav className="flex-1 space-y-2 px-5">
+            <Link href="/dashboard">
+              <SidebarItem
+                icon={<Home className="h-5 w-5" />}
+                label="Dashboard"
+              />
+            </Link>
+            <Link href="/properties">
+              <SidebarItem
+                icon={<Grid2x2 className="h-5 w-5" />}
+                label="Propiedades"
+                active
+              />
+            </Link>
+            <Link href="/contacts">
+              <SidebarItem
+                icon={<User className="h-5 w-5" />}
+                label="Contactos"
+              />
+            </Link>
+            <SidebarItem
+              icon={<ClipboardList className="h-5 w-5" />}
+              label="Citas"
             />
-          </div>
-
-          <nav className="flex-1 space-y-2 px-4 py-6">
-            <a
-              href="/dashboard"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 transition hover:bg-slate-50"
-            >
-              <span className="text-xl text-emerald-700">⌂</span>
-              <span>Dashboard</span>
-            </a>
-
-            <a
-              href="/properties"
-              className="flex items-center gap-4 rounded-2xl bg-slate-50 px-5 py-4 text-[18px] font-medium text-slate-800"
-            >
-              <span className="text-xl text-emerald-700">⊞</span>
-              <span>Propiedades</span>
-            </a>
-
-            <a
-              href="/contacts"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 transition hover:bg-slate-50"
-            >
-              <span className="text-xl">◌</span>
-              <span>Contactos</span>
-            </a>
-
-            <a
-              href="#"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 transition hover:bg-slate-50"
-            >
-              <span className="text-xl">☷</span>
-              <span>Citas</span>
-            </a>
-
-            <a
-              href="#"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 transition hover:bg-slate-50"
-            >
-              <span className="text-xl">↗</span>
-              <span>Reportes</span>
-            </a>
-
-            <a
-              href="#"
-              className="flex items-center gap-4 rounded-2xl px-5 py-4 text-[18px] text-slate-600 transition hover:bg-slate-50"
-            >
-              <span className="text-xl">⚙</span>
-              <span>Ajustes</span>
-            </a>
+            <SidebarItem
+              icon={<LineChart className="h-5 w-5" />}
+              label="Reportes"
+            />
+            <SidebarItem
+              icon={<Settings className="h-5 w-5" />}
+              label="Ajustes"
+            />
           </nav>
 
           <div className="px-4 py-6">
