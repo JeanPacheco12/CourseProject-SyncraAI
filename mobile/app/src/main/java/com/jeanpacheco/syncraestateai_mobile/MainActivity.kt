@@ -108,6 +108,11 @@ class MainActivity : ComponentActivity() {
                         composable("ai_config") {
                             AIConfigScreen(navController = navController)
                         }
+
+                        // Ruta 11: Pantalla para la Ayuda y Soporte del agente (Perfil del agente)
+                        composable("support") {
+                            SupportScreen(navController = navController)
+                        }
                     }
                 }
             }

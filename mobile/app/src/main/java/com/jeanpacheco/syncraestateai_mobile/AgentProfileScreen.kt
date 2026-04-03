@@ -113,10 +113,11 @@ fun AgentProfileScreen(navController: NavController) {
                     icon = Icons.Default.Star,
                     onClick = { navController.navigate("ai_config") }
                 )
+                // 3. ESTE AHORA NAVEGA A SOPORTE
                 ProfileOptionItem(
                     text = "Ayuda y Soporte",
                     icon = Icons.Default.Email,
-                    onClick = { Toast.makeText(context, "Próximamente", Toast.LENGTH_SHORT).show() }
+                    onClick = { navController.navigate("support") }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
