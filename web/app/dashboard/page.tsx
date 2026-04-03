@@ -1,4 +1,14 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { collection, getDocs } from "firebase/firestore";
+import Link from "next/link";
 import {
   Bell,
   ChevronDown,
@@ -15,40 +25,6 @@ import {
   Check,
 } from "lucide-react";
 
-const activityRows = [
-  {
-    cliente: "Alejandro Gómez",
-    propiedad: "Casa en Polanco",
-    estado: "En proceso",
-    fecha: "24 abr. 2026",
-    badge:
-      "bg-sky-100 text-sky-700",
-  },
-  {
-    cliente: "Marta Pérez",
-    propiedad: "Depto. en Condesa",
-    estado: "Completada",
-    fecha: "23 abr. 2026",
-    badge:
-      "bg-emerald-100 text-emerald-700",
-  },
-  {
-    cliente: "José Martínez",
-    propiedad: "Casa en Polanco",
-    estado: "Nueva",
-    fecha: "22 abr. 2026",
-    badge:
-      "bg-blue-100 text-blue-700",
-  },
-  {
-    cliente: "Ana Torres",
-    propiedad: "Casa en Las Lomas",
-    estado: "Interesado",
-    fecha: "20 abr. 2026",
-    badge:
-      "bg-amber-100 text-amber-700",
-  },
-];
 
 function SidebarItem({
   icon,
@@ -110,7 +86,85 @@ function StatCard({
   );
 }
 
+type UserProfile = {
+  nombre: string;
+  apellido: string;
+  email: string;
+};
+
+type Property = {
+  id: string;
+  title: string;
+  type: string;
+  location: string;
+  price: number;
+  status: string;
+  interested: number;
+};
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/");
+  };
+  useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      setUserProfile(null);
+      router.push("/");
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data() as UserProfile;
+        setUserProfile({
+          nombre: data.nombre || "",
+          apellido: data.apellido || "",
+          email: data.email || user.email || "",
+        });
+      } else {
+        setUserProfile({
+          nombre: "",
+          apellido: "",
+          email: user.email || "",
+        });
+      }
+      const propertiesSnapshot = await getDocs(collection(db, "properties"));
+      const propertiesData: Property[] = propertiesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Property, "id">),
+      }));
+
+      setProperties(propertiesData);
+    } catch (error) {
+      console.error("Error al obtener datos del usuario:", error);
+      setUserProfile({
+        nombre: "",
+        apellido: "",
+        email: user.email || "",
+      });
+    }
+  });
+
+  return () => unsubscribe();
+}, [router]);
+
+  const nombre = userProfile?.nombre || "Usuario";
+  const apellido = userProfile?.apellido || "";
+  const nombreCompleto = `${nombre} ${apellido}`.trim() || "Usuario";
+  const totalInterested = properties.reduce(
+  (sum, property) => sum + property.interested,
+  0
+  );
+
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
       <div className="flex min-h-screen">
@@ -136,14 +190,18 @@ export default function DashboardPage() {
               label="Dashboard"
               active
             />
-            <SidebarItem
-              icon={<Grid2x2 className="h-5 w-5" />}
-              label="Inmuebles"
-            />
-            <SidebarItem
-              icon={<User className="h-5 w-5" />}
-              label="Contactos"
-            />
+            <Link href="/properties">
+              <SidebarItem
+                icon={<Grid2x2 className="h-5 w-5" />}
+                label="Propiedades"
+              />
+            </Link>
+            <Link href="/contacts">
+              <SidebarItem
+                icon={<User className="h-5 w-5" />}
+                label="Contactos"
+              />
+            </Link>
             <SidebarItem
               icon={<ClipboardList className="h-5 w-5" />}
               label="Citas"
@@ -159,10 +217,13 @@ export default function DashboardPage() {
           </nav>
 
           <div className="px-5 pb-8 pt-4">
-            <SidebarItem
-              icon={<Settings className="h-5 w-5" />}
-              label="Ajustes"
-            />
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium text-red-600 transition hover:bg-red-50"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Cerrar sesión</span>
+            </button>
           </div>
         </aside>
 
@@ -207,7 +268,7 @@ export default function DashboardPage() {
             <div className="mb-8 flex items-start justify-between gap-6">
               <div>
                 <h1 className="text-[48px] font-semibold leading-tight text-slate-800">
-                  Bienvenido de vuelta, Alejandro
+                  Bienvenido de vuelta, {nombre}
                 </h1>
                 <p className="mt-3 text-2xl text-slate-400">
                   Aquí están las métricas de tu negocio hoy.
@@ -218,14 +279,14 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <Image
                     src="/avatar-user.png"
-                    alt="Alejandro Méndez"
+                    alt={nombreCompleto}
                     width={58}
                     height={58}
                     className="rounded-full object-cover"
                   />
                   <div>
                     <p className="text-[18px] font-semibold text-slate-700">
-                      Alejandro Méndez
+                      {nombreCompleto}
                     </p>
                     <p className="text-[16px] text-slate-400">Gerente</p>
                   </div>
@@ -243,16 +304,16 @@ export default function DashboardPage() {
                 change="12.5%"
               />
               <StatCard
-                icon={<CalendarDays className="h-6 w-6 text-sky-600" />}
-                title="Citas agendadas"
-                value="12"
-                change="3.4%"
+                icon={<Users className="h-6 w-6 text-sky-600" />}
+                title="Personas interesadas"
+                value={totalInterested.toString()}
+                change=""
               />
               <StatCard
-                icon={<Users className="h-6 w-6 text-sky-600" />}
-                title="Nuevos clientes"
-                value="21"
-                change="15"
+                icon={<Home className="h-6 w-6 text-sky-600" />}
+                title="Propiedades registradas"
+                value={properties.length.toString()}
+                change=""
               />
               <StatCard
                 icon={<Check className="h-6 w-6 text-emerald-600" />}
@@ -277,11 +338,30 @@ export default function DashboardPage() {
                 <div className="flex h-[250px] items-end justify-between gap-3 rounded-2xl bg-gradient-to-b from-emerald-50 to-white p-4">
                   {[40, 30, 52, 35, 44, 78, 65, 72, 60, 66, 70, 88].map(
                     (h, i) => (
-                      <div key={i} className="flex flex-1 flex-col items-center gap-3">
-                        <div className="w-full rounded-t-2xl bg-emerald-300/80" style={{ height: `${h * 2}px` }} />
+                      <div
+                        key={i}
+                        className="flex flex-1 flex-col items-center gap-3"
+                      >
+                        <div
+                          className="w-full rounded-t-2xl bg-emerald-300/80"
+                          style={{ height: `${h * 2}px` }}
+                        />
                         <span className="text-xs font-medium text-slate-400">
                           {
-                            ["ENE","FEB","MAR","APR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DEC"][i]
+                            [
+                              "ENE",
+                              "FEB",
+                              "MAR",
+                              "APR",
+                              "MAY",
+                              "JUN",
+                              "JUL",
+                              "AGO",
+                              "SEP",
+                              "OCT",
+                              "NOV",
+                              "DEC",
+                            ][i]
                           }
                         </span>
                       </div>
@@ -303,21 +383,22 @@ export default function DashboardPage() {
 
                   <div className="text-right">
                     <p className="text-6xl font-semibold text-slate-800">38</p>
-                    <p className="text-xl text-slate-400">Cada und</p>
+                    <p className="text-xl text-slate-400">Cada uno</p>
                   </div>
                 </div>
 
                 <div className="mt-6 flex h-[220px] items-end justify-between gap-4 rounded-2xl bg-slate-50 p-5">
-                  {[60, 95, 70, 135, 96, 112, 116, 128, 18, 16].map((h, i) => (
-                    <div key={i} className="flex flex-1 flex-col items-center gap-3">
+                  {[60, 95, 70, 135, 96, 112, 116].map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-1 flex-col items-center gap-3"
+                    >
                       <div
                         className="w-full rounded-t-xl bg-emerald-400"
                         style={{ height: `${h}px` }}
                       />
                       <span className="text-xs font-medium text-slate-400">
-                        {
-                          ["LUN","MAR","MIE","MIE","JUE","VIE","SAB","SAB","DOM","DOM"][i]
-                        }
+                        {["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][i]}
                       </span>
                     </div>
                   ))}
@@ -327,36 +408,32 @@ export default function DashboardPage() {
 
             <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="mb-6 text-[22px] font-semibold text-slate-800">
-                Actividad reciente
+                Propiedades registradas
               </h3>
 
               <div className="overflow-hidden rounded-2xl border border-slate-100">
                 <table className="w-full">
                   <thead className="bg-slate-50 text-left text-[15px] text-slate-400">
                     <tr>
-                      <th className="px-6 py-4 font-medium">Cliente</th>
-                      <th className="px-6 py-4 font-medium">Propiedad</th>
-                      <th className="px-6 py-4 font-medium">Estado</th>
-                      <th className="px-6 py-4 font-medium">Fecha</th>
+                      <th className="px-6 py-4 font-medium">Título</th>
+                      <th className="px-6 py-4 font-medium">Tipo</th>
+                      <th className="px-6 py-4 font-medium">Ubicación</th>
+                      <th className="px-6 py-4 font-medium">Precio</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {activityRows.map((row) => (
+                    {properties.map((property) => (
                       <tr
-                        key={`${row.cliente}-${row.fecha}`}
+                        key={property.id}
                         className="border-t border-slate-100 text-[16px] text-slate-700"
                       >
-                        <td className="px-6 py-5 font-medium">{row.cliente}</td>
-                        <td className="px-6 py-5">{row.propiedad}</td>
-                        <td className="px-6 py-5">
-                          <span
-                            className={`rounded-full px-4 py-2 text-sm font-medium ${row.badge}`}
-                          >
-                            {row.estado}
-                          </span>
+                        <td className="px-6 py-5 font-medium">{property.title}</td>
+                        <td className="px-6 py-5">{property.type}</td>
+                        <td className="px-6 py-5">{property.location}</td>
+                        <td className="px-6 py-5 text-slate-500">
+                          Q{property.price.toLocaleString()}
                         </td>
-                        <td className="px-6 py-5 text-slate-500">{row.fecha}</td>
                       </tr>
                     ))}
                   </tbody>
