@@ -97,25 +97,29 @@ fun AgentProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            val context = LocalContext.current // <-- Mueve esto aquí arriba
+
             // MENÚ DE OPCIONES
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProfileOptionItem("Mis Estadísticas", Icons.Default.Info)
-                ProfileOptionItem("Configuración de IA", Icons.Default.Star)
-                ProfileOptionItem("Ayuda y Soporte", Icons.Default.Email)
+                // 1. ESTE AHORA NAVEGA A LAS ESTADÍSTICAS
+                ProfileOptionItem(
+                    text = "Mis Estadísticas",
+                    icon = Icons.Default.Info,
+                    onClick = { navController.navigate("statistics") }
+                )
+                // 2. ESTOS SIGUEN MOSTRANDO EL MENSAJE POR AHORA
+                ProfileOptionItem(
+                    text = "Configuración de IA",
+                    icon = Icons.Default.Star,
+                    onClick = { Toast.makeText(context, "Próximamente", Toast.LENGTH_SHORT).show() }
+                )
+                ProfileOptionItem(
+                    text = "Ayuda y Soporte",
+                    icon = Icons.Default.Email,
+                    onClick = { Toast.makeText(context, "Próximamente", Toast.LENGTH_SHORT).show() }
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
-
-                // BOTÓN CERRAR SESIÓN
-                Button(
-                    onClick = { navController.navigate("login") { popUpTo("home_screen") { inclusive = true } } },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFEBEB)),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Default.ExitToApp, contentDescription = null, tint = Color.Red)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cerrar Sesión", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
             }
         }
     }
@@ -130,18 +134,14 @@ fun StatItem(value: String, label: String) {
 }
 
 @Composable
-fun ProfileOptionItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    val context = LocalContext.current
-
+fun ProfileOptionItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(SurfaceGray)
-            .clickable {
-                Toast.makeText(context, "Sección de $text próximamente", Toast.LENGTH_SHORT).show()
-            }
+            .clickable { onClick() } // <-- ¡AQUÍ ESTÁ LA MAGIA! Ejecuta la acción que le mandamos
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

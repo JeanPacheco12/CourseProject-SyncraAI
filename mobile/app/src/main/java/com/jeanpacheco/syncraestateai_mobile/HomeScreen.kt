@@ -462,12 +462,10 @@ fun HeroCarouselSection(
         item {
             HeroCard(
                 title = "Resumen del\ndía",
-                subtitle = "¡Tienes 3 citas programadas para hoy!",
+                subtitle = "¡Tienes 1 cita programada para hoy!",
                 imageRes = R.drawable.img_carrusel_1,
                 onClick = {
-                    // Acción: Hace scroll hacia abajo (1200 píxeles aprox. para llegar a Agenda)
-                    // Nota: 1200 es un valor estimado, lo ajustaremos si es necesario
-                    coroutineScope.launch { scrollState.animateScrollTo(1200) }
+                    navController.navigate("agenda")
                 }
             )
         }

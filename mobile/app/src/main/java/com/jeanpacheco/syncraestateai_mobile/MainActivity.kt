@@ -94,9 +94,14 @@ class MainActivity : ComponentActivity() {
                             PropertyDetailScreen(navController = navController, propertyId = propertyId ?: "")
                         }
 
-                        // Ruta 8: Pantalla dedicada para la Agenda (Premium).
+                        // Ruta 8: Pantalla dedicada para la Agenda (Calendario moderno).
                         composable("agenda") {
                             AgendaScreen(navController = navController)
+                        }
+
+                        // Ruta 9: Pantalla dedicada para las estadísiticas del agente (Perfil del agente).
+                        composable("statistics") {
+                            StatisticsScreen(navController = navController)
                         }
                     }
                 }
