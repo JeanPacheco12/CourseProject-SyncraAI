@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Refresh
@@ -20,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -31,6 +33,25 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import android.content.Intent
+import android.net.Uri
+import android.content.Context
+import android.widget.Toast
+
+fun enviarWhatsApp(context: Context, telefono: String, mensaje: String) {
+    try {
+        // Limpiamos el teléfono (por si tiene espacios o símbolos)
+        val numeroLimpio = telefono.replace(" ", "").replace("+", "")
+
+        // Creamos la URI mágica de WhatsApp
+        val uri = Uri.parse("https://api.whatsapp.com/send?phone=$numeroLimpio&text=${Uri.encode(mensaje)}")
+
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "WhatsApp no está instalado", Toast.LENGTH_SHORT).show()
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +108,7 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
                 title = { Text("Perfil", fontWeight = FontWeight.Bold, color = SyncraPrimary, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = SyncraPrimary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = SyncraPrimary)
                     }
                 },
                 actions = {
@@ -208,6 +229,7 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
                     // 2. AHORA LE PASAMOS TODAS LAS VARIABLES AL PITCH
                     SmartPitchSheetContent(
                         clientName = clientName,
+                        clientPhone = clientPhone,
                         clientLocation = clientLocation,
                         clientInterest = clientInterest,
                         clientProfession = clientProfession,
@@ -222,6 +244,7 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
 @Composable
 fun SmartPitchSheetContent(
     clientName: String,
+    clientPhone: String,
     clientLocation: String,
     clientInterest: String,
     clientProfession: String,
@@ -232,12 +255,17 @@ fun SmartPitchSheetContent(
     var isGenerating by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
 
+    // ¡NUEVO!: Necesitamos el context para que la IA lea tus Preferencias (Tono, Longitud)
+    val context = LocalContext.current
+
     // 2. Este bloque ejecuta la IA automáticamente en cuanto el Bottom Sheet se abre
     LaunchedEffect(Unit) {
         isGenerating = true
-        // Unimos toda la info del cliente para que la IA tenga un súper contexto
-        val superContexto = "Busca: $clientRequirement en $clientLocation. Tipo de propiedad: $clientInterest. Profesión del cliente: $clientProfession."
-        pitchText = GeminiHelper.generateSmartPitch(clientName, superContexto)
+        // Unimos TODA la info del cliente (incluyendo el nombre) en un solo String
+        val datosCliente = "Nombre: $clientName. Busca: $clientRequirement en $clientLocation. Tipo de propiedad: $clientInterest. Profesión del cliente: $clientProfession."
+
+        // Llamamos a la función corregida y le pasamos el context
+        pitchText = GeminiHelper.generarSmartPitch(context, datosCliente) ?: "Ups, hubo un error al generar el mensaje. Intenta de nuevo."
         isGenerating = false
     }
 
@@ -294,8 +322,10 @@ fun SmartPitchSheetContent(
                         coroutineScope.launch {
                             isGenerating = true
                             pitchText = "Generando una nueva propuesta..."
-                            val superContexto = "Busca: $clientRequirement en $clientLocation. Tipo de propiedad: $clientInterest. Profesión del cliente: $clientProfession."
-                            pitchText = GeminiHelper.generateSmartPitch(clientName, superContexto)
+                            val datosCliente = "Nombre: $clientName. Busca: $clientRequirement en $clientLocation. Tipo de propiedad: $clientInterest. Profesión del cliente: $clientProfession."
+
+                            // Llamamos a la función corregida y le pasamos el context
+                            pitchText = GeminiHelper.generarSmartPitch(context, datosCliente) ?: "Ups, hubo un error al generar el mensaje. Intenta de nuevo."
                             isGenerating = false
                         }
                     }
@@ -311,12 +341,23 @@ fun SmartPitchSheetContent(
 
             // Botón de enviar (próximamente lo conectaremos a WhatsApp)
             Button(
-                onClick = { /* Aquí pondremos la lógica de WhatsApp después */ },
+                onClick = {
+                    if (pitchText.isNotEmpty() && pitchText != "Conectando con la IA de Gemini...") {
+                        enviarWhatsApp(context, clientPhone, pitchText)
+                    } else {
+                        Toast.makeText(context, "Espera a que se genere el mensaje", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 modifier = Modifier.weight(1f).height(54.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
             ) {
-                Icon(painter = painterResource(id = R.drawable.wsp_logo_1), contentDescription = "WhatsApp", tint = Color.White, modifier = Modifier.size(18.dp))
+                Icon(
+                    painter = painterResource(id = R.drawable.wsp_logo_1),
+                    contentDescription = "WhatsApp",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Enviar por WhatsApp", fontWeight = FontWeight.Bold, color = Color.White)
             }

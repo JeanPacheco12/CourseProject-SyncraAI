@@ -30,11 +30,14 @@ fun AIConfigScreen(navController: NavController) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    // Variables de estado para guardar la configuración (En una app real irían a SharedPreferences o Firebase)
-    var selectedTone by remember { mutableStateOf("Amigable") }
-    var selectedLength by remember { mutableStateOf("Corto (WhatsApp)") }
-    var autoGenerate by remember { mutableStateOf(true) }
-    var translateAuto by remember { mutableStateOf(false) }
+    // 1. Instanciamos nuestra clase de preferencias
+    val aiPrefs = remember { AIPrefs(context) }
+
+    // 2. Inicializamos las variables LEYENDO la memoria del teléfono (SharedPreferences)
+    var selectedTone by remember { mutableStateOf(aiPrefs.getTone()) }
+    var selectedLength by remember { mutableStateOf(aiPrefs.getLength()) }
+    var autoGenerate by remember { mutableStateOf(aiPrefs.getAutoGenerate()) }
+    var translateAuto by remember { mutableStateOf(aiPrefs.getTranslate()) }
 
     Scaffold(
         topBar = {
@@ -104,9 +107,17 @@ fun AIConfigScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // BOTÓN GUARDAR
+            // 3. BOTÓN GUARDAR MODIFICADO
             Button(
                 onClick = {
+                    // GUARDAMOS LAS PREFERENCIAS EN LA MEMORIA ANTES DE CERRAR LA PANTALLA
+                    aiPrefs.saveSettings(
+                        tone = selectedTone,
+                        length = selectedLength,
+                        autoGenerate = autoGenerate,
+                        translate = translateAuto
+                    )
+
                     Toast.makeText(context, "Configuración guardada exitosamente", Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
                 },
