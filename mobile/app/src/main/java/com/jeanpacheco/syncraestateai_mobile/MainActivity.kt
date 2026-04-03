@@ -103,6 +103,11 @@ class MainActivity : ComponentActivity() {
                         composable("statistics") {
                             StatisticsScreen(navController = navController)
                         }
+
+                        // Ruta 10: Pantalla para la configuración de la IA del agente (Perfil del agente).
+                        composable("ai_config") {
+                            AIConfigScreen(navController = navController)
+                        }
                     }
                 }
             }

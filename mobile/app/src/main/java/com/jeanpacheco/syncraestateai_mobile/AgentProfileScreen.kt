@@ -92,7 +92,7 @@ fun AgentProfileScreen(navController: NavController) {
                 Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color.LightGray))
                 StatItem("45", "Visitas")
                 Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color.LightGray))
-                StatItem("4.9", "Rating")
+                StatItem("4.9/5", "Rating")
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -107,11 +107,11 @@ fun AgentProfileScreen(navController: NavController) {
                     icon = Icons.Default.Info,
                     onClick = { navController.navigate("statistics") }
                 )
-                // 2. ESTOS SIGUEN MOSTRANDO EL MENSAJE POR AHORA
+                // 2. AHORA ESTE NAVEGA A LA CONFIG DE IA
                 ProfileOptionItem(
                     text = "Configuración de IA",
                     icon = Icons.Default.Star,
-                    onClick = { Toast.makeText(context, "Próximamente", Toast.LENGTH_SHORT).show() }
+                    onClick = { navController.navigate("ai_config") }
                 )
                 ProfileOptionItem(
                     text = "Ayuda y Soporte",
