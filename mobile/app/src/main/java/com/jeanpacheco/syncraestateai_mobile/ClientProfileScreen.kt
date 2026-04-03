@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +52,7 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
     var clientDob by remember { mutableStateOf("") }
     var clientStatus by remember { mutableStateOf("Nuevo") }
     var isLoading by remember { mutableStateOf(true) }
-    var clientRequirement by remember { mutableStateOf("") } // <-- ¡AGREGA ESTA LÍNEA!
+    var clientRequirement by remember { mutableStateOf("") }
 
     // --- DESCARGAR DATOS DESDE FIREBASE ---
     LaunchedEffect(clientId) {
@@ -226,14 +227,18 @@ fun SmartPitchSheetContent(
     clientProfession: String,
     clientRequirement: String
 ) {
-    // --- PITCH DINÁMICO Y PERSUASIVO ---
-    var pitchText by remember {
-        mutableStateOf(
-            "¡Hola $clientName! 👋 Espero que estés teniendo un excelente día.\n\n" +
-                    "Viendo tu perfil, entiendo que como $clientProfession valoras tu tiempo y buscas inversiones inteligentes. Noté que tienes un interés fuerte en: $clientInterest por el sector de $clientLocation, buscando específicamente: $clientRequirement.\n\n" +
-                    "Precisamente acaba de entrar al mercado una opción exclusiva que encaja a la perfección con lo que necesitas. Tiene un altísimo potencial y, por sus características, se moverá muy rápido.\n\n" +
-                    "¿Te parece si hacemos un espacio de 5 minutos en tu agenda hoy mismo para compartirte los detalles en privado y que seas de los primeros en verla?"
-        )
+    // 1. Estados para manejar la IA adentro de la tarjeta
+    var pitchText by remember { mutableStateOf("Conectando con la IA de Gemini...") }
+    var isGenerating by remember { mutableStateOf(true) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // 2. Este bloque ejecuta la IA automáticamente en cuanto el Bottom Sheet se abre
+    LaunchedEffect(Unit) {
+        isGenerating = true
+        // Unimos toda la info del cliente para que la IA tenga un súper contexto
+        val superContexto = "Busca: $clientRequirement en $clientLocation. Tipo de propiedad: $clientInterest. Profesión del cliente: $clientProfession."
+        pitchText = GeminiHelper.generateSmartPitch(clientName, superContexto)
+        isGenerating = false
     }
 
     Column(
@@ -241,17 +246,19 @@ fun SmartPitchSheetContent(
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
             .padding(bottom = 32.dp)
-            .verticalScroll(rememberScrollState()), // <-- ¡ESTA ES LA LÍNEA MÁGICA!
-            horizontalAlignment = Alignment.CenterHorizontally
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val geminiGradient = Brush.linearGradient(colors = listOf(Color(0xFF4285F4), Color(0xFF9B72CB), Color(0xFFD96570)))
         val glowGradient = Brush.radialGradient(colors = listOf(Color(0xFF9B72CB).copy(alpha = 0.8f), Color.Transparent))
+
         Box(modifier = Modifier.size(90.dp).background(glowGradient, CircleShape), contentAlignment = Alignment.Center) {
             Box(modifier = Modifier.size(64.dp).clip(CircleShape).background(Color.White).border(2.dp, geminiGradient, CircleShape).padding(12.dp), contentAlignment = Alignment.Center) {
                 Image(painter = painterResource(id = R.drawable.logo_gemini), contentDescription = "Gemini AI", modifier = Modifier.fillMaxSize())
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = buildAnnotatedString {
                 withStyle(style = SpanStyle(color = Color(0xFF234F68))) { append("Smart Pitch ") }
@@ -259,8 +266,11 @@ fun SmartPitchSheetContent(
             },
             fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
         )
+
         Spacer(modifier = Modifier.height(24.dp))
         val darkGrayBackground = Color(0xFFE8ECEF)
+
+        // 3. Área de texto que muestra el mensaje (y que el usuario puede editar)
         OutlinedTextField(
             value = pitchText,
             onValueChange = { pitchText = it },
@@ -270,15 +280,40 @@ fun SmartPitchSheetContent(
                 focusedContainerColor = darkGrayBackground, unfocusedContainerColor = darkGrayBackground,
                 focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent,
             ),
-            textStyle = LocalTextStyle.current.copy(fontSize = 15.sp, color = Color.DarkGray, lineHeight = 22.sp)
+            textStyle = LocalTextStyle.current.copy(fontSize = 15.sp, color = Color.DarkGray, lineHeight = 22.sp),
+            enabled = !isGenerating // Deshabilita la edición mientras la IA está escribiendo
         )
+
         Spacer(modifier = Modifier.height(24.dp))
+
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { }, modifier = Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)).background(darkGrayBackground)) {
-                Icon(Icons.Default.Refresh, contentDescription = "Regenerar", tint = Color(0xFF234F68))
+            // 4. Botón Regenerar: Vuelve a pedirle a la IA otro mensaje diferente
+            IconButton(
+                onClick = {
+                    if (!isGenerating) {
+                        coroutineScope.launch {
+                            isGenerating = true
+                            pitchText = "Generando una nueva propuesta..."
+                            val superContexto = "Busca: $clientRequirement en $clientLocation. Tipo de propiedad: $clientInterest. Profesión del cliente: $clientProfession."
+                            pitchText = GeminiHelper.generateSmartPitch(clientName, superContexto)
+                            isGenerating = false
+                        }
+                    }
+                },
+                modifier = Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)).background(darkGrayBackground)
+            ) {
+                if (isGenerating) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF234F68), strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Default.Refresh, contentDescription = "Regenerar", tint = Color(0xFF234F68))
+                }
             }
+
+            // Botón de enviar (próximamente lo conectaremos a WhatsApp)
             Button(
-                onClick = { }, modifier = Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(12.dp),
+                onClick = { /* Aquí pondremos la lógica de WhatsApp después */ },
+                modifier = Modifier.weight(1f).height(54.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
             ) {
                 Icon(painter = painterResource(id = R.drawable.wsp_logo_1), contentDescription = "WhatsApp", tint = Color.White, modifier = Modifier.size(18.dp))
