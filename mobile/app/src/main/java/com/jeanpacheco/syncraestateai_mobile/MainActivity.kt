@@ -93,6 +93,11 @@ class MainActivity : ComponentActivity() {
                             // Si por alguna razón es nulo, le pasamos un string vacío para que no truene la app
                             PropertyDetailScreen(navController = navController, propertyId = propertyId ?: "")
                         }
+
+                        // Ruta 8: Pantalla dedicada para la Agenda (Premium).
+                        composable("agenda") {
+                            AgendaScreen(navController = navController)
+                        }
                     }
                 }
             }

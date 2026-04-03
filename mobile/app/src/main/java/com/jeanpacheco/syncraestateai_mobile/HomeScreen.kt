@@ -169,7 +169,7 @@ fun HomeScreen(navController: NavController) {
                 ActiveProspectsSection(navController = navController, searchQuery = globalSearchQuery) // <-- NUEVO
                 Spacer(modifier = Modifier.height(32.dp))
 
-                AgendaSection(searchQuery = globalSearchQuery)
+                AgendaSection(navController = navController, searchQuery = globalSearchQuery)
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -784,40 +784,98 @@ fun ExploreProspectItem() {
 data class AgendaData(val time: String, val dateTag: String, val clientName: String, val location: String, val imageRes: Int)
 
 @Composable
-fun AgendaSection(searchQuery: String) {
-    val allAgendaItems = listOf(
-        AgendaData("09:00 AM", "Hoy", "Amanda Cifuentes", "Zona 15", R.drawable.propiedad_agenda_1),
-        AgendaData("11:30 AM", "Hoy", "Anderson Souza", "Zona 10", R.drawable.propiedad_agenda_2)
-    )
+fun AgendaSection(navController: NavController, searchQuery: String) {
+    // --- VARIABLES PARA LA AGENDA ---
+    var agendaClients by remember { mutableStateOf<List<Map<String, String>>>(emptyList()) }
+    var isLoadingAgenda by remember { mutableStateOf(true) }
 
+    // --- DESCARGAR VISITAS DE HOY DESDE FIREBASE ---
+    LaunchedEffect(Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("clients")
+            .whereEqualTo("status", "Visita hoy") // Filtramos solo los de hoy
+            .get()
+            .addOnSuccessListener { result ->
+                val clients = mutableListOf<Map<String, String>>()
+                for (document in result) {
+                    clients.add(
+                        mapOf(
+                            "id" to document.id,
+                            "name" to (document.getString("name") ?: "Sin nombre"),
+                            "location" to (document.getString("location") ?: "Sin ubicación")
+                        )
+                    )
+                }
+                agendaClients = clients
+                isLoadingAgenda = false
+            }
+            .addOnFailureListener {
+                isLoadingAgenda = false
+            }
+    }
+
+    // --- FILTRO DE BÚSQUEDA ---
     val filteredAgenda = if (searchQuery.isBlank()) {
-        allAgendaItems
+        agendaClients
     } else {
-        allAgendaItems.filter { item ->
-            item.clientName.contains(searchQuery, ignoreCase = true) ||
-                    item.location.contains(searchQuery, ignoreCase = true)
+        agendaClients.filter { client ->
+            (client["name"]?.contains(searchQuery, ignoreCase = true) ?: false) ||
+                    (client["location"]?.contains(searchQuery, ignoreCase = true) ?: false)
         }
     }
 
+    // --- SECCIÓN DE AGENDA EN LA UI ---
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(text = "Agenda", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
-            Text(text = "Ver toda", fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.SemiBold)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Agenda - Visitas de hoy", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = SyncraPrimary)
+            Text(
+                text = "Ver todo",
+                color = TextGray,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                // ¡AQUÍ ESTABA EL ERROR! Ya está corregido a "agenda"
+                modifier = Modifier.clickable { navController.navigate("agenda") }
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (filteredAgenda.isEmpty()) {
-            Text("No hay citas que coincidan", color = TextGray, fontSize = 14.sp)
+        if (isLoadingAgenda) {
+            Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = SyncraPrimary)
+            }
+        } else if (filteredAgenda.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .background(SurfaceGray, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (searchQuery.isBlank()) "No tienes visitas programadas para hoy 🏖️" else "No se encontraron visitas.",
+                    color = TextGray,
+                    fontSize = 14.sp
+                )
+            }
         } else {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 items(filteredAgenda.size) { index ->
-                    val item = filteredAgenda[index]
+                    val client = filteredAgenda[index]
                     AgendaCard(
-                        time = item.time,
-                        dateTag = item.dateTag,
-                        clientName = item.clientName,
-                        location = item.location,
-                        imageRes = item.imageRes
+                        dateTag = "Hoy",
+                        time = "Por confirmar",
+                        clientName = client["name"] ?: "",
+                        location = client["location"] ?: "",
+                        onClick = {
+                            navController.navigate("client_profile/${client["id"]}")
+                        }
                     )
                 }
             }
@@ -826,21 +884,29 @@ fun AgendaSection(searchQuery: String) {
 }
 
 @Composable
-fun AgendaCard(time: String, dateTag: String, clientName: String, location: String, imageRes: Int) {
-    Card(modifier = Modifier.width(280.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = SurfaceGray)) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+fun AgendaCard(dateTag: String, time: String, clientName: String, location: String, onClick: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceGray),
+        modifier = Modifier
+            .width(260.dp)
+            .clickable { onClick() }
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+            ) {
                 Image(
-                    painter = painterResource(id = imageRes),
-                    contentDescription = "Imagen de la propiedad en agenda",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    painter = painterResource(id = R.drawable.propiedad_agenda_1),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
-                // Opcional: Una pequeña viñeta de hora sobre la imagen si la necesitas
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(12.dp)
+                        .padding(8.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color.White.copy(alpha = 0.9f))
                         .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -849,12 +915,12 @@ fun AgendaCard(time: String, dateTag: String, clientName: String, location: Stri
                 }
             }
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Cita con $clientName", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SyncraPrimary)
+                Text(text = "Cita con $clientName", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = SyncraPrimary, maxLines = 1)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(painter = painterResource(id = R.drawable.ic_ubicacion), contentDescription = null, modifier = Modifier.size(14.dp), tint = TextGray)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = location, color = TextGray, fontSize = 13.sp)
+                    Text(text = location, color = TextGray, fontSize = 13.sp, maxLines = 1)
                 }
             }
         }
