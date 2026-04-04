@@ -17,6 +17,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.compose.ui.platform.LocalContext // <-- NUEVO
+import android.widget.Toast // <-- NUEVO
+import androidx.compose.foundation.background
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.clickable
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +34,17 @@ fun AllPropertiesScreen(navController: NavController) {
     var propertiesList by remember { mutableStateOf<List<Property>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
+
+    val context = LocalContext.current // <-- NUEVO: Para que funcione el Toast del micrófono
+    // --- LA MAGIA DE VOZ QUE HICISTE EN CLIENTES ---
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0) ?: ""
+            searchQuery = spokenText // Automáticamente filtra las propiedades con lo que escuche
+        }
+    }
 
     // Descargamos TODAS las propiedades desde Firebase
     LaunchedEffect(Unit) {
@@ -92,18 +113,50 @@ fun AllPropertiesScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Buscador estilo Syncra
+                // Buscador estilo Syncra (¡Ahora con micrófono!)
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = { Text("Buscar por zona, nombre o tipo...", color = Color.Gray, fontSize = 14.sp) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar", tint = SyncraPrimary) },
+
+                    // --- ¡AQUÍ ESTÁ EL MICRÓFONO NUEVO! ---
+                    trailingIcon = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(end = 12.dp)
+                        ) {
+                            Box(modifier = Modifier.height(24.dp).width(1.dp).background(Color.LightGray))
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_mic),
+                                contentDescription = "Búsqueda por voz",
+                                tint = Color.Gray,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable {
+                                        // --- ABRIMOS EL MICRÓFONO DE GOOGLE ---
+                                        try {
+                                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-GT")
+                                            }
+                                            speechRecognizerLauncher.launch(intent)
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "Micrófono no soportado", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                            )
+                        }
+                    },
+                    // --------------------------------------
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        // --- AQUÍ ESTÁ LA MAGIA DEL COLOR NEGRO ---
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
                         unfocusedContainerColor = SurfaceGray,

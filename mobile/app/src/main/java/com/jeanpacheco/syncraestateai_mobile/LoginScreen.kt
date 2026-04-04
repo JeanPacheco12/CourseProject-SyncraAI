@@ -74,10 +74,18 @@ fun LoginScreen(navController: NavController) {
                 auth.signInWithCredential(credential)
                     .addOnCompleteListener { authTask ->
                         if (authTask.isSuccessful) {
+                            // --- MAGIA NUEVA: Leemos la memoria ---
+                            val prefs = context.getSharedPreferences("SyncraPrefs", android.content.Context.MODE_PRIVATE)
+                            val uid = auth.currentUser?.uid ?: ""
+                            val yaVioElCarrusel = prefs.getBoolean("carrusel_visto_$uid", false)
+
                             android.widget.Toast.makeText(context, "¡Bienvenido con Google!", android.widget.Toast.LENGTH_SHORT).show()
-                            navController.navigate("onboarding_pager") {
-                                // Borramos el Login del historial para que no puedan darle 'Atrás'
-                                popUpTo("login") { inclusive = true }
+
+                            // Decidimos a dónde lo mandamos
+                            if (yaVioElCarrusel) {
+                                navController.navigate("home_screen") { popUpTo("login") { inclusive = true } }
+                            } else {
+                                navController.navigate("onboarding_pager") { popUpTo("login") { inclusive = true } }
                             }
                         } else {
                             showError = true
@@ -239,9 +247,18 @@ fun LoginScreen(navController: NavController) {
                         auth.signInWithEmailAndPassword(email, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
+                                    // --- MAGIA NUEVA: Leemos la memoria ---
+                                    val prefs = context.getSharedPreferences("SyncraPrefs", android.content.Context.MODE_PRIVATE)
+                                    val uid = auth.currentUser?.uid ?: ""
+                                    val yaVioElCarrusel = prefs.getBoolean("carrusel_visto_$uid", false)
+
                                     android.widget.Toast.makeText(context, "¡Bienvenido agente!", android.widget.Toast.LENGTH_SHORT).show()
-                                    navController.navigate("onboarding_pager") {
-                                        popUpTo("login") { inclusive = true }
+
+                                    // Decidimos a dónde lo mandamos
+                                    if (yaVioElCarrusel) {
+                                        navController.navigate("home_screen") { popUpTo("login") { inclusive = true } }
+                                    } else {
+                                        navController.navigate("onboarding_pager") { popUpTo("login") { inclusive = true } }
                                     }
                                 } else {
                                     showError = true

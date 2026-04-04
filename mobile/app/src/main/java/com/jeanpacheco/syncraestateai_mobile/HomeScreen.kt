@@ -904,7 +904,7 @@ fun AgendaSection(navController: NavController, searchQuery: String) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Agenda - Visitas de hoy", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = SyncraPrimary)
+            Text(text = "Agenda", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = SyncraPrimary)
             Text(
                 text = "Ver todo",
                 color = TextGray,

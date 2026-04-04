@@ -70,6 +70,9 @@ fun OnboardingPagerScreen(navController: NavController) {
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()
+    // --- NUEVO: Traemos el contexto y la herramienta para guardar memoria ---
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
 
     Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
 
@@ -95,6 +98,12 @@ fun OnboardingPagerScreen(navController: NavController) {
             // BOTÓN OMITIR.
             Surface(
                 onClick = {
+                    // 1. Guardamos en la memoria que ya vio el carrusel
+                    val prefs = context.getSharedPreferences("SyncraPrefs", android.content.Context.MODE_PRIVATE)
+                    val uid = auth.currentUser?.uid ?: ""
+                    prefs.edit().putBoolean("carrusel_visto_$uid", true).apply()
+
+                    // 2. Navegamos al Home
                     navController.navigate("home_screen") {
                         popUpTo("onboarding_pager") { inclusive = true }
                     }
@@ -205,6 +214,12 @@ fun OnboardingPagerScreen(navController: NavController) {
                         Button(
                             onClick = {
                                 if (pagerState.currentPage == pages.size - 1) {
+                                    // 1. Guardamos en la memoria que ya vio el carrusel
+                                    val prefs = context.getSharedPreferences("SyncraPrefs", android.content.Context.MODE_PRIVATE)
+                                    val uid = auth.currentUser?.uid ?: ""
+                                    prefs.edit().putBoolean("carrusel_visto_$uid", true).apply()
+
+                                    // 2. Navegamos al Home
                                     navController.navigate("home_screen") {
                                         popUpTo("onboarding_pager") { inclusive = true }
                                     }
