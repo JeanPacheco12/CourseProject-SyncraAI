@@ -75,7 +75,10 @@ fun LoginScreen(navController: NavController) {
                     .addOnCompleteListener { authTask ->
                         if (authTask.isSuccessful) {
                             android.widget.Toast.makeText(context, "¡Bienvenido con Google!", android.widget.Toast.LENGTH_SHORT).show()
-                            navController.navigate("home_screen")
+                            navController.navigate("onboarding_pager") {
+                                // Borramos el Login del historial para que no puedan darle 'Atrás'
+                                popUpTo("login") { inclusive = true }
+                            }
                         } else {
                             showError = true
                         }
@@ -237,7 +240,9 @@ fun LoginScreen(navController: NavController) {
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     android.widget.Toast.makeText(context, "¡Bienvenido agente!", android.widget.Toast.LENGTH_SHORT).show()
-                                    navController.navigate("home_screen")
+                                    navController.navigate("onboarding_pager") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
                                 } else {
                                     showError = true
                                 }

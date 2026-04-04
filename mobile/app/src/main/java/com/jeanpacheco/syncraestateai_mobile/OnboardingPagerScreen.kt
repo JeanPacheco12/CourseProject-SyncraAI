@@ -85,26 +85,20 @@ fun OnboardingPagerScreen(navController: NavController) {
             // LOGO: Tamaño fijo restaurado y alineación mantenida.
             Image(
                 painter = painterResource(id = R.drawable.bg_logo),
-                contentDescription = "Logo Syncra (Ir a inicio)",
+                contentDescription = "Logo Syncra", // Ya no va a ir a inicio
                 modifier = Modifier
-                    .size(width = 150.dp, height = 45.dp) // Regresamos al tamaño grande.
-                    .clickable (
-                        // ESTAS DOS LÍNEAS QUITAN EL EFECTO VISUAL SOMBREADO AL PRESIONAR EL LOGO.
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ){
-                        navController.navigate("onboarding") {
-                            // Esto evita que se acumulen múltiples pantallas iguales si se apacha mucho.
-                            popUpTo(0)
-                        }
-                    },
+                    .size(width = 150.dp, height = 45.dp), // Solo dejamos el tamaño
                 alignment = Alignment.CenterStart,
                 contentScale = ContentScale.Fit
             )
 
             // BOTÓN OMITIR.
             Surface(
-                onClick = { navController.navigate("login") },
+                onClick = {
+                    navController.navigate("home_screen") {
+                        popUpTo("onboarding_pager") { inclusive = true }
+                    }
+                },
                 color = OmitirBgColor,
                 shape = RoundedCornerShape(50)
             ) {
@@ -211,7 +205,9 @@ fun OnboardingPagerScreen(navController: NavController) {
                         Button(
                             onClick = {
                                 if (pagerState.currentPage == pages.size - 1) {
-                                    navController.navigate("login")
+                                    navController.navigate("home_screen") {
+                                        popUpTo("onboarding_pager") { inclusive = true }
+                                    }
                                 } else {
                                     coroutineScope.launch {
                                         pagerState.animateScrollToPage(pagerState.currentPage + 1)

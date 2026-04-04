@@ -36,6 +36,7 @@ import androidx.compose.ui.focus.focusRequester
 import kotlinx.coroutines.launch
 // Imports para que funcione Firebase
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.lazy.items
 // Imports para funcionalidades del micrófono.
 import android.app.Activity
@@ -67,6 +68,34 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = view
     var selectedCategory by remember { mutableStateOf("Todas") }
     // --- NUEVO: ESTADO PARA NOTIFICACIONES ---
     var showNotifications by remember { mutableStateOf(false) }
+    // --- NUEVO: ESTADO PARA EL NOMBRE DEL AGENTE ---
+    var agentFirstName by remember { mutableStateOf("...") }
+
+    // --- NUEVO: DESCARGAR NOMBRE DESDE FIRESTORE ---
+    LaunchedEffect(Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            val db = FirebaseFirestore.getInstance()
+            db.collection("users")
+                .whereEqualTo("uid", currentUser.uid)
+                .get()
+                .addOnSuccessListener { documents ->
+                    if (!documents.isEmpty) {
+                        val doc = documents.documents[0]
+                        // Solo sacamos el nombre (sin apellido) para el saludo del Home
+                        val nombre = doc.getString("nombre") ?: "Agente"
+                        agentFirstName = nombre
+                    } else {
+                        agentFirstName = "Agente"
+                    }
+                }
+                .addOnFailureListener {
+                    agentFirstName = ""
+                }
+        } else {
+            agentFirstName = "Invitado"
+        }
+    }
 
     // --- NUEVOS ESTADOS PARA SCROLL Y TECLADO ---
     val scrollState = rememberScrollState()
@@ -125,9 +154,10 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = view
                 // 2. CONTENIDO SOBRE EL FONDO CURVO
                 Column(modifier = Modifier.fillMaxWidth()) {
                     HeaderSection(
+                        agentFirstName = agentFirstName, // <-- ¡NUEVA LÍNEA! LE PASAMOS EL NOMBRE
                         hasUnreadNotifications = hasUnreadNotifications,
                         onBellClick = {
-                            homeViewModel.markAsRead() // Le avisamos al ViewModel
+                            homeViewModel.markAsRead()
                             showNotifications = true
                         },
                         onProfileClick = { navController.navigate("agent_profile") }
@@ -306,9 +336,10 @@ fun NotificationItem(
 // SUB-COMPONENTES DESGLOSADOS
 // ==========================================
 
-@OptIn(ExperimentalMaterial3Api::class) // <-- Importante para usar BadgedBox
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeaderSection(
+    agentFirstName: String, // <-- NUEVO: Recibe el nombre
     hasUnreadNotifications: Boolean, // <-- NUEVO: Recibe el estado
     onBellClick: () -> Unit,
     onProfileClick: () -> Unit
@@ -319,11 +350,13 @@ fun HeaderSection(
             .padding(horizontal = 24.dp)
             .padding(top = 40.dp)
     ) {
+        // --- 1. BARRA SUPERIOR (Logo, Campana y Foto) ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // LOGO
             Image(
                 painter = painterResource(id = R.drawable.logo_syncra),
                 contentDescription = "Logo Syncra",
@@ -331,20 +364,19 @@ fun HeaderSection(
                 contentScale = ContentScale.Fit
             )
 
+            // CAMPANA Y FOTO DE PERFIL
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // --- NUEVO: ENVOLVEMOS TU BOX ORIGINAL ---
+
                 BadgedBox(
                     badge = {
                         if (hasUnreadNotifications) {
                             Badge(
-                                containerColor = Color.Red, // El color del puntito
-                                // Ajustamos los offsets para que no quede muy separado del círculo
+                                containerColor = Color.Red,
                                 modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
                             )
                         }
                     }
                 ) {
-                    // TU CÓDIGO ORIGINAL SE QUEDA IGUAL AQUÍ
                     Box(
                         modifier = Modifier
                             .size(48.dp)
@@ -361,9 +393,9 @@ fun HeaderSection(
                         )
                     }
                 }
-                // ----------------------------------------
 
-                Spacer(modifier = Modifier.width(12.dp))
+                // ESPACIO HORIZONTAL entre la campana y la foto (cambié height por width)
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Image(
                     painter = painterResource(id = R.drawable.img_perfil_agente),
@@ -379,9 +411,11 @@ fun HeaderSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // --- 2. SALUDO PRINCIPAL ---
         Row {
             Text(text = "¡Hola, ", fontSize = 26.sp, color = SyncraPrimary)
-            Text(text = "Rodrigo!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
+            // APLICAMOS LA VARIABLE AQUÍ Y BORRAMOS A RODRIGO
+            Text(text = "$agentFirstName!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
         }
         Text(
             text = "Revisa tu agenda de hoy",

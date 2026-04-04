@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jeanpacheco.syncraestateai_mobile.ui.theme.SyncraGreen
 import androidx.navigation.NavController
+// Import de FirebaseAuth
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun OnboardingScreen(navController: NavController) {
@@ -80,7 +82,19 @@ fun OnboardingScreen(navController: NavController) {
             // Sección inferior: El Botón y texto.
             Button(
                 onClick = {
-                    navController.navigate("onboarding_pager")
+                    // LÓGICA DE VALIDACIÓN DE SESIÓN
+                    val currentUser = FirebaseAuth.getInstance().currentUser
+
+                    if (currentUser != null) {
+                        // Si ya tiene sesión (Veterano) -> Directo al Home
+                        navController.navigate("home_screen") {
+                            // Borramos el Onboarding del historial de navegación
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    } else {
+                        // Si no tiene sesión (Nuevo) -> Lo mandamos a loguearse
+                        navController.navigate("login")
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.65f) // Ocupa el 65% del ancho.
