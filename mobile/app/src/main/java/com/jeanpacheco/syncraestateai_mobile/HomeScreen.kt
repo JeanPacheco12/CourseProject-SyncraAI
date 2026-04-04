@@ -46,6 +46,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
+// Importa el viewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 // ==========================================
@@ -58,46 +60,21 @@ val SurfaceGray = Color(0xFFF4F6F9)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = viewModel()) {
     // --- NUEVO: ESTADO GLOBAL PARA EL BUSCADOR ---
     var globalSearchQuery by remember { mutableStateOf("") }
     // --- NUEVO: ESTADO PARA LA CATEGORÍA SELECCIONADA ---
     var selectedCategory by remember { mutableStateOf("Todas") }
     // --- NUEVO: ESTADO PARA NOTIFICACIONES ---
     var showNotifications by remember { mutableStateOf(false) }
-    // Estado para saber si el puntito rojo debe verse o no
-    var hasUnreadNotifications by remember { mutableStateOf(true) }
-
-    var notificationsList by remember {
-        mutableStateOf(listOf(
-            NotificationData(
-                title = "Mensaje en Inglés",
-                desc = "Darren Smith busca algo en Zona 10.",
-                time = "10 min",
-                icon = Icons.Default.Person,
-                route = "client_profile/cli_8" // <-- Va al perfil de Darren
-            ),
-            NotificationData(
-                title = "Nuevo Prospecto",
-                desc = "Anderson Souza envió un mensaje.",
-                time = "2h",
-                icon = Icons.Default.Person,
-                route = "client_profile/cli_1" // <-- Va al perfil de Anderson
-            ),
-            NotificationData(
-                title = "Cita confirmada",
-                desc = "Revisión de Penthouse Cayalá.",
-                time = "5h",
-                icon = Icons.Default.DateRange,
-                route = "property_detail/prop_4" // <-- Va a la propiedad Penthouse
-            )
-        ))
-    }
 
     // --- NUEVOS ESTADOS PARA SCROLL Y TECLADO ---
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     val searchFocusRequester = remember { FocusRequester() }
+
+    val notificationsList = homeViewModel.notificationsList
+    val hasUnreadNotifications = homeViewModel.hasUnreadNotifications
 
     Scaffold(
         bottomBar = {
@@ -148,9 +125,9 @@ fun HomeScreen(navController: NavController) {
                 // 2. CONTENIDO SOBRE EL FONDO CURVO
                 Column(modifier = Modifier.fillMaxWidth()) {
                     HeaderSection(
-                        hasUnreadNotifications = hasUnreadNotifications, // <-- PASAMOS EL ESTADO
+                        hasUnreadNotifications = hasUnreadNotifications,
                         onBellClick = {
-                            hasUnreadNotifications = false // <-- APAGAMOS EL PUNTITO AL HACER CLIC
+                            homeViewModel.markAsRead() // Le avisamos al ViewModel
                             showNotifications = true
                         },
                         onProfileClick = { navController.navigate("agent_profile") }
@@ -232,7 +209,9 @@ fun HomeScreen(navController: NavController) {
                             fontSize = 12.sp,
                             color = Color(0xFF8DB049),
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable { notificationsList = emptyList() }
+                            modifier = Modifier.clickable {
+                                homeViewModel.clearNotifications() // Limpia en el ViewModel
+                            }
                         )
                     }
 

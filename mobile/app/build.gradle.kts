@@ -72,4 +72,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     // Google Generative AI (Gemini)
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    // Para usar la función viewModel() en Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 }

@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         /*
+
         fun resetearBaseDeDatos() {
             val db = FirebaseFirestore.getInstance()
 
@@ -78,6 +79,23 @@ class MainActivity : ComponentActivity() {
                     "location" to "Carretera a El Salvador", "interest" to "Casa Mixco", "profession" to "Ingeniero en Sistemas",
                     "nationality" to "Salvadoreño", "dob" to "03 de Noviembre, 1985", "requirement" to "Casa 3 habs con jardín amplio",
                     "time" to "Ayer"
+                ),
+                // --- 8. DARREN SMITH (El de la notificación en inglés) ---
+                mapOf(
+                    "id" to "cli_8", "name" to "Darren Smith", "status" to "Nuevo",
+                    "phone" to "+502 6789 0034", "email" to "darren.smith@email.com", "budget" to "Q. 2,500,000",
+                    "location" to "Zona 10, Ciudad de Guatemala", "interest" to "Looking for a house in the city center", "profession" to "Digital Nomad",
+                    "nationality" to "Estadounidense", "dob" to "04 de Julio, 1990", "requirement" to "I need a fast internet connection and a quiet workspace. Preferably close to cafes.",
+                    "time" to "Hace 10 minutos"
+                ),
+
+                // --- 9. ALFONSO JARAMILLO ---
+                mapOf(
+                    "id" to "cli_9", "name" to "Alfonso Jaramillo", "status" to "Nuevo",
+                    "phone" to "+502 3344 5566", "email" to "ajaramillo@empresa.com", "budget" to "Q. 5,000,000",
+                    "location" to "Zona 14, Ciudad de Guatemala", "interest" to "Penthouse Cayalá", "profession" to "Inversionista",
+                    "nationality" to "Colombiano", "dob" to "15 de Septiembre, 1980", "requirement" to "Alta seguridad y vistas a los volcanes.",
+                    "time" to "Hoy"
                 )
             )
 
