@@ -43,6 +43,9 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Badge
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 
 // ==========================================
@@ -62,12 +65,32 @@ fun HomeScreen(navController: NavController) {
     var selectedCategory by remember { mutableStateOf("Todas") }
     // --- NUEVO: ESTADO PARA NOTIFICACIONES ---
     var showNotifications by remember { mutableStateOf(false) }
+    // Estado para saber si el puntito rojo debe verse o no
+    var hasUnreadNotifications by remember { mutableStateOf(true) }
 
     var notificationsList by remember {
         mutableStateOf(listOf(
-            NotificationData("Cita confirmada", "Amanda Cifuentes aceptó la visita para hoy.", "10 min", Icons.Default.DateRange),
-            NotificationData("Nuevo Prospecto", "Anderson Souza envió un mensaje por WhatsApp.", "2h", Icons.Default.Person),
-            NotificationData("Recordatorio", "Seguimiento pendiente para Gustavo Ramos.", "5h", Icons.Default.Notifications)
+            NotificationData(
+                title = "Mensaje en Inglés",
+                desc = "Darren Smith busca algo en Zona 10.",
+                time = "10 min",
+                icon = Icons.Default.Person,
+                route = "client_profile/cli_8" // <-- Va al perfil de Darren
+            ),
+            NotificationData(
+                title = "Nuevo Prospecto",
+                desc = "Anderson Souza envió un mensaje.",
+                time = "2h",
+                icon = Icons.Default.Person,
+                route = "client_profile/cli_1" // <-- Va al perfil de Anderson
+            ),
+            NotificationData(
+                title = "Cita confirmada",
+                desc = "Revisión de Penthouse Cayalá.",
+                time = "5h",
+                icon = Icons.Default.DateRange,
+                route = "property_detail/prop_4" // <-- Va a la propiedad Penthouse
+            )
         ))
     }
 
@@ -125,7 +148,11 @@ fun HomeScreen(navController: NavController) {
                 // 2. CONTENIDO SOBRE EL FONDO CURVO
                 Column(modifier = Modifier.fillMaxWidth()) {
                     HeaderSection(
-                        onBellClick = { showNotifications = true },
+                        hasUnreadNotifications = hasUnreadNotifications, // <-- PASAMOS EL ESTADO
+                        onBellClick = {
+                            hasUnreadNotifications = false // <-- APAGAMOS EL PUNTITO AL HACER CLIC
+                            showNotifications = true
+                        },
                         onProfileClick = { navController.navigate("agent_profile") }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -200,7 +227,6 @@ fun HomeScreen(navController: NavController) {
                             fontWeight = FontWeight.ExtraBold,
                             color = SyncraPrimary
                         )
-                        // ACCIÓN: Al dar clic, vaciamos la lista
                         Text(
                             text = "Marcar como leídas",
                             fontSize = 12.sp,
@@ -212,14 +238,13 @@ fun HomeScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // LÓGICA DE PANTALLA VACÍA O LISTA
                     if (notificationsList.isEmpty()) {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
-                                Icons.Default.CheckCircle, // <--- ESTA ES LA RUTA EXACTA
+                                Icons.Default.CheckCircle,
                                 contentDescription = "Todo leído",
                                 tint = Color.LightGray,
                                 modifier = Modifier.size(64.dp)
@@ -230,12 +255,19 @@ fun HomeScreen(navController: NavController) {
                         }
                     } else {
                         notificationsList.forEach { notification ->
+                            // --- ACTUALIZADO: PASAMOS LA ACCIÓN DE CLIC ---
                             NotificationItem(
                                 title = notification.title,
                                 desc = notification.desc,
                                 time = notification.time,
                                 icon = notification.icon,
-                                isNew = true
+                                isNew = true,
+                                onClick = {
+                                    if (notification.route != null) {
+                                        showNotifications = false // Cierra el menú
+                                        navController.navigate(notification.route) // Navega a la ruta
+                                    }
+                                }
                             )
                         }
                     }
@@ -245,14 +277,23 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+// --- ACTUALIZADO: NOTIFICATION ITEM AHORA RECIBE ONCLICK ---
 @Composable
-fun NotificationItem(title: String, desc: String, time: String, icon: androidx.compose.ui.graphics.vector.ImageVector, isNew: Boolean) {
+fun NotificationItem(
+    title: String,
+    desc: String,
+    time: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isNew: Boolean,
+    onClick: () -> Unit = {} // <-- NUEVO PARÁMETRO
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(if (isNew) SurfaceGray else Color.Transparent)
+            .clickable { onClick() } // <-- ¡AQUÍ SE HACE LA MAGIA DEL CLIC!
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -286,8 +327,13 @@ fun NotificationItem(title: String, desc: String, time: String, icon: androidx.c
 // SUB-COMPONENTES DESGLOSADOS
 // ==========================================
 
+@OptIn(ExperimentalMaterial3Api::class) // <-- Importante para usar BadgedBox
 @Composable
-fun HeaderSection(onBellClick: () -> Unit, onProfileClick: () -> Unit) {
+fun HeaderSection(
+    hasUnreadNotifications: Boolean, // <-- NUEVO: Recibe el estado
+    onBellClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -307,21 +353,37 @@ fun HeaderSection(onBellClick: () -> Unit, onProfileClick: () -> Unit) {
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .border(1.dp, Color(0xFF8DB049), CircleShape)
-                        .background(Color.White, CircleShape)
-                        .clickable { onBellClick() }, // ACCIÓN CAMPANA
-                    contentAlignment = Alignment.Center
+                // --- NUEVO: ENVOLVEMOS TU BOX ORIGINAL ---
+                BadgedBox(
+                    badge = {
+                        if (hasUnreadNotifications) {
+                            Badge(
+                                containerColor = Color.Red, // El color del puntito
+                                // Ajustamos los offsets para que no quede muy separado del círculo
+                                modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
+                            )
+                        }
+                    }
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_campana),
-                        contentDescription = "Notificaciones",
-                        tint = SyncraPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    // TU CÓDIGO ORIGINAL SE QUEDA IGUAL AQUÍ
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .border(1.dp, Color(0xFF8DB049), CircleShape)
+                            .background(Color.White, CircleShape)
+                            .clickable { onBellClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_campana),
+                            contentDescription = "Notificaciones",
+                            tint = SyncraPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
+                // ----------------------------------------
+
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Image(
@@ -330,7 +392,7 @@ fun HeaderSection(onBellClick: () -> Unit, onProfileClick: () -> Unit) {
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .clickable { onProfileClick() }, // ACCIÓN PERFIL
+                        .clickable { onProfileClick() },
                     contentScale = ContentScale.Crop
                 )
             }
@@ -940,7 +1002,8 @@ data class NotificationData(
     val title: String,
     val desc: String,
     val time: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val route: String? = null // <-- ¡NUEVO CAMPO PARA NAVEGAR!
 )
 
 data class Client(
