@@ -109,7 +109,12 @@ fun EditPropertyScreen(navController: NavController, propertyId: String) {
                 onValueChange = { title = it },
                 label = { Text("Título de la propiedad") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                // Forzamos el texto a negro sin importar el tema del celular
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
             )
 
             OutlinedTextField(
@@ -117,7 +122,11 @@ fun EditPropertyScreen(navController: NavController, propertyId: String) {
                 onValueChange = { price = it },
                 label = { Text("Precio (Q)") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
             )
 
             OutlinedTextField(
@@ -125,7 +134,11 @@ fun EditPropertyScreen(navController: NavController, propertyId: String) {
                 onValueChange = { location = it },
                 label = { Text("Ubicación exacta") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
             )
 
             OutlinedTextField(
@@ -134,7 +147,11 @@ fun EditPropertyScreen(navController: NavController, propertyId: String) {
                 label = { Text("Descripción larga") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 5,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
             )
 
             Spacer(modifier = Modifier.height(24.dp))
