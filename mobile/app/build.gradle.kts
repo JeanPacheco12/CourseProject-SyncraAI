@@ -74,4 +74,5 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     // Para usar la función viewModel() en Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }

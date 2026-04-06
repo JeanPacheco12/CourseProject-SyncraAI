@@ -56,10 +56,10 @@ fun enviarWhatsApp(context: Context, telefono: String, mensaje: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientProfileScreen(navController: NavController, clientId: String) { // <-- Recibe el ID
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
-
-    var showPitchSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showPitchSheet by remember { mutableStateOf(false) }
 
     // --- ESTADOS DINÁMICOS DEL CLIENTE ---
     var clientName by remember { mutableStateOf("Cargando...") }
@@ -112,7 +112,17 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Acción de compartir */ }) {
+                    IconButton(onClick = {
+                        // ---> 2. LÓGICA DE COMPARTIR <---
+                        val textoACompartir = "¡Revisa el perfil de $clientName en Syncra Estate AI! Busca: $clientRequirement en $clientLocation."
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            putExtra(Intent.EXTRA_TEXT, textoACompartir)
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, "Compartir cliente")
+                        context.startActivity(shareIntent)
+                        // --------------------------------
+                    }) {
                         Icon(Icons.Default.Share, contentDescription = "Compartir", tint = SyncraPrimary)
                     }
                 },
@@ -164,7 +174,16 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
 
                 Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Button(
-                        onClick = { /* Llamar */ },
+                        onClick = {
+                            // ---> 3. LÓGICA DE WHATSAPP (LLAMAR/CHAT) <---
+                            if (clientPhone.isNotEmpty() && clientPhone != "Sin teléfono") {
+                                // Le pasamos un saludo inicial automático usando su nombre
+                                enviarWhatsApp(context, clientPhone, "¡Hola $clientName! Te escribo de Syncra Estate AI.")
+                            } else {
+                                Toast.makeText(context, "El cliente no tiene un número registrado", Toast.LENGTH_SHORT).show()
+                            }
+                            // ----------------------------------------------
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
                         shape = RoundedCornerShape(24.dp),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)

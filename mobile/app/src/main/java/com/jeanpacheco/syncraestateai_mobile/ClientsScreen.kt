@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.firestore.FirebaseFirestore
+import android.net.Uri
 
 // Variables de colores
 val ColorVisitaHoy = Color(0xFF8BC83F)
@@ -42,6 +43,8 @@ val ColorNuevo = Color(0xFFA13FC8)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsScreen(navController: NavController) {
+    // ---> ¡AGREGA ESTA LÍNEA AQUÍ! <---
+    val context = LocalContext.current
     // --- ESTADOS ELEVADOS (State Hoisting) ---
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf<String?>(null) }
@@ -136,6 +139,7 @@ fun ClientsScreen(navController: NavController) {
                             else -> ColorNuevo
                         }
 
+                        // Dentro del LazyColumn { items(filteredClients) { client -> ...
                         ClientListCard(
                             name = client.name,
                             status = client.status,
@@ -144,9 +148,22 @@ fun ClientsScreen(navController: NavController) {
                             imageRes = client.imageRes,
                             bgColor = bgColor,
                             onClick = {
-                                // ¡MAGIA! Viaja al perfil pasando el ID
                                 navController.navigate("client_profile/${client.id}")
+                            },
+                            // --- NUEVA LÓGICA DE WHATSAPP ---
+                            onWhatsappClick = {
+                                // Por ahora usamos un número de prueba.
+                                // ¡Luego puedes agregar el teléfono a tu modelo Client en Firebase!
+                                val phone = "50212345678"
+                                val url = "https://api.whatsapp.com/send?phone=$phone"
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "WhatsApp no está instalado", Toast.LENGTH_SHORT).show()
+                                }
                             }
+                            // ---------------------------------
                         )
                     }
                 }
@@ -245,7 +262,16 @@ fun ClientsFilterSection(selectedFilter: String?, onFilterChange: (String?) -> U
 }
 
 @Composable
-fun ClientListCard(name: String, status: String, propertyInfo: String, date: String, imageRes: Int, bgColor: Color, onClick: () -> Unit) {
+fun ClientListCard(
+    name: String,
+    status: String,
+    propertyInfo: String,
+    date: String,
+    imageRes: Int,
+    bgColor: Color,
+    onClick: () -> Unit,
+    onWhatsappClick: () -> Unit // <-- NUEVO PARÁMETRO
+) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
@@ -266,9 +292,15 @@ fun ClientListCard(name: String, status: String, propertyInfo: String, date: Str
                 }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.height(64.dp)) {
-                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)).clickable { }, contentAlignment = Alignment.Center) {
+
+                // --- AQUÍ ESTÁ EL CAMBIO DEL CLICK ---
+                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)).clickable {
+                    onWhatsappClick()
+                }, contentAlignment = Alignment.Center) {
                     Icon(painter = painterResource(id = R.drawable.wsp_logo_1), contentDescription = "WhatsApp", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
+                // -------------------------------------
+
                 Text(text = date, fontSize = 10.sp, color = Color.White)
             }
         }

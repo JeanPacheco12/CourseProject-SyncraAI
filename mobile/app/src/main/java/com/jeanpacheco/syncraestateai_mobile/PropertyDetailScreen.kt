@@ -1,5 +1,7 @@
 package com.jeanpacheco.syncraestateai_mobile
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -29,22 +32,42 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.firestore.FirebaseFirestore
+import coil.compose.AsyncImage
 
 private val IconBgGray = Color(0xFFF5F4F8)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PropertyDetailScreen(navController: NavController, propertyId: String) { // <-- 1. Agregamos propertyId
+fun PropertyDetailScreen(navController: NavController, propertyId: String) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    // --- 2. ESTADOS DINÁMICOS PARA FIREBASE ---
+    // --- ESTADOS DINÁMICOS PARA FIREBASE ---
     var propertyTitle by remember { mutableStateOf("Cargando...") }
     var propertyLocation by remember { mutableStateOf("") }
     var propertyPrice by remember { mutableStateOf(0L) }
     var propertyType by remember { mutableStateOf("") }
+
+    var propertyBedrooms by remember { mutableStateOf("0") }
+    var propertyBathrooms by remember { mutableStateOf("0") }
+    var propertyParking by remember { mutableStateOf("0") }
+    var propertyDescription by remember { mutableStateOf("Cargando descripción...") }
+    var propertyImageUrl by remember { mutableStateOf("") }
+
+    // --> LOS 4 CAMPOS NUEVOS <--
+    var propertyMetraje by remember { mutableStateOf("0") }
+    var propertyNivel by remember { mutableStateOf("0") }
+    var propertyMantenimiento by remember { mutableStateOf(0L) }
+    var propertyAmenidades by remember { mutableStateOf(listOf<String>()) }
+
     var isLoading by remember { mutableStateOf(true) }
 
-    // --- 3. DESCARGAMOS LA PROPIEDAD ESPECÍFICA ---
+    // Guardaremos la lista completa de links
+    var galleryImages by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Recordaremos cuál link está seleccionado para la foto grande
+    var selectedLargeImageUrl by remember { mutableStateOf("") }
+
+    // --- DESCARGAMOS LA PROPIEDAD ESPECÍFICA ---
     LaunchedEffect(propertyId) {
         if (propertyId.isNotEmpty()) {
             val db = FirebaseFirestore.getInstance()
@@ -55,6 +78,30 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                         propertyLocation = document.getString("location") ?: "Ubicación desconocida"
                         propertyPrice = document.getLong("price") ?: 0L
                         propertyType = document.getString("type") ?: "Propiedad"
+
+                        propertyBedrooms = document.getLong("habitaciones")?.toString() ?: "0"
+                        propertyBathrooms = document.getLong("banos")?.toString() ?: "0"
+                        propertyParking = document.getLong("parqueos")?.toString() ?: "0"
+                        propertyDescription = document.getString("descripcion") ?: "Sin descripción disponible."
+
+                        // --> AQUÍ ESTÁ EL CAMBIO DE LA GALERÍA <--
+                        // 1. Descargamos la lista de imágenes
+                        @Suppress("UNCHECKED_CAST")
+                        galleryImages = document.get("imageGalleryUrlList") as? List<String> ?: emptyList()
+
+                        // 2. Si hay fotos, ponemos la primera como la imagen grande inicial
+                        if (galleryImages.isNotEmpty()) {
+                            selectedLargeImageUrl = galleryImages[0]
+                        }
+
+                        // --> DESCARGAMOS LOS NUEVOS CAMPOS <--
+                        propertyMetraje = document.getLong("metraje")?.toString() ?: "0"
+                        propertyNivel = document.getLong("nivel")?.toString() ?: "0"
+                        propertyMantenimiento = document.getLong("mantenimiento") ?: 0L
+
+                        // Rescatamos la lista de amenidades de Firebase
+                        @Suppress("UNCHECKED_CAST")
+                        propertyAmenidades = document.get("amenidades") as? List<String> ?: emptyList()
                     }
                     isLoading = false
                 }
@@ -69,7 +116,6 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
 
     Scaffold(
         bottomBar = {
-            // Cambiamos el Box por un Column para apilar el mensajito y el botón
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,7 +123,6 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Mensaje de autorización de gerencia
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -97,9 +142,9 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                     )
                 }
 
-                // Botón CTA actualizado
                 Button(
-                    onClick = { /* Acción para ir a pantalla de edición */ },
+                    // ---> CAMBIAMOS ESTO <---
+                    onClick = { navController.navigate("edit_property/$propertyId") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
@@ -111,7 +156,6 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
             }
         },
         content = { paddingValues ->
-            // --- 4. PANTALLA DE CARGA MIENTRAS BUSCA EN FIREBASE ---
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = SyncraPrimary)
@@ -142,7 +186,15 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                         }
 
                         IconButton(
-                            onClick = { /* Compartir */ },
+                            onClick = {
+                                val textoACompartir = "¡Mira esta increíble propiedad: $propertyTitle ubicada en $propertyLocation por Q.$propertyPrice en Syncra Estate AI!"
+                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                    putExtra(Intent.EXTRA_TEXT, textoACompartir)
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, "Compartir propiedad")
+                                context.startActivity(shareIntent)
+                            },
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .background(SurfaceGray)
@@ -159,20 +211,25 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                             .height(320.dp)
                             .padding(horizontal = 16.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.propiedad_agenda_1),
-                            contentDescription = "Imagen de la propiedad",
+                        // IMAGEN PRINCIPAL (Dinámica)
+                        AsyncImage(
+                            model = selectedLargeImageUrl,
+                            contentDescription = "Imagen principal",
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(24.dp)),
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(id = R.drawable.propiedad_agenda_1),
+                            error = painterResource(id = R.drawable.propiedad_agenda_1)
                         )
 
+                        // FILTRO OSCURO
                         Box(modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(24.dp))
                             .background(Color.Black.copy(alpha = 0.2f)))
 
+                        // CONTENIDO INFERIOR (Etiqueta + Miniaturas)
                         Row(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
@@ -181,46 +238,62 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.Bottom
                         ) {
+                            // ETIQUETA DEL TIPO DE PROPIEDAD
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(24.dp))
                                     .background(SyncraPrimary)
                                     .padding(horizontal = 16.dp, vertical = 8.dp)
                             ) {
-                                // --- TEXTO DINÁMICO ---
                                 Text(text = propertyType, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White)
                             }
 
+                            // ---> NUEVA COLUMNA DE MINIATURAS DINÁMICA <---
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.End
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.propiedad_agenda_1),
-                                    contentDescription = "Cocina",
-                                    modifier = Modifier
-                                        .size(45.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Image(
-                                    painter = painterResource(id = R.drawable.propiedad_agenda_1),
-                                    contentDescription = "Baño",
-                                    modifier = Modifier
-                                        .size(45.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .size(45.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color.Black.copy(alpha = 0.6f))
-                                        .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = "+3", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                // Recorremos máximo las primeras 3 imágenes de la lista
+                                galleryImages.take(3).forEach { imageUrl ->
+                                    val isSelected = imageUrl == selectedLargeImageUrl
+
+                                    AsyncImage(
+                                        model = imageUrl,
+                                        contentDescription = "Miniatura",
+                                        modifier = Modifier
+                                            .size(45.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            // Borde amarillo si está seleccionada, blanco si no
+                                            .border(
+                                                width = if (isSelected) 2.dp else 1.dp,
+                                                color = if (isSelected) ColorVisitaHoy else Color.White,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            // Aquí ocurre la magia al hacer clic
+                                            .clickable { selectedLargeImageUrl = imageUrl },
+                                        contentScale = ContentScale.Crop,
+                                        placeholder = painterResource(id = R.drawable.propiedad_agenda_1),
+                                        error = painterResource(id = R.drawable.propiedad_agenda_1)
+                                    )
+                                }
+
+                                // Si hay más de 3 fotos, mostramos el contador restante
+                                if (galleryImages.size > 3) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(45.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Black.copy(alpha = 0.6f))
+                                            .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "+${galleryImages.size - 3}",
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -232,7 +305,6 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                             .fillMaxWidth()
                             .padding(24.dp)
                     ) {
-                        // --- TEXTO DINÁMICO ---
                         Text(
                             text = propertyTitle,
                             fontSize = 24.sp,
@@ -245,7 +317,6 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.LocationOn, contentDescription = "Ubicación", tint = Color.Gray, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            // --- TEXTO DINÁMICO ---
                             Text(text = propertyLocation, fontSize = 14.sp, color = Color.Gray)
                         }
 
@@ -256,7 +327,6 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            // --- TEXTO DINÁMICO ---
                             val precioConComas = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(propertyPrice)
                             Text(
                                 text = "Q. $precioConComas",
@@ -287,11 +357,13 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                                 .horizontalScroll(horizontalScrollState),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            FeatureItem(title = "Habitaciones", value = "3", iconResId = R.drawable.ic_cama)
-                            FeatureItem(title = "Baños", value = "2", iconResId = R.drawable.ic_bano)
-                            FeatureItem(title = "Parqueos", value = "2", iconResId = R.drawable.ic_carro)
-                            FeatureItem(title = "Metraje", value = "120m²", iconResId = R.drawable.ic_metraje)
-                            FeatureItem(title = "Nivel", value = "4", iconResId = R.drawable.ic_nivel)
+                            FeatureItem(title = "Habitaciones", value = propertyBedrooms, iconResId = R.drawable.ic_cama)
+                            FeatureItem(title = "Baños", value = propertyBathrooms, iconResId = R.drawable.ic_bano)
+                            FeatureItem(title = "Parqueos", value = propertyParking, iconResId = R.drawable.ic_carro)
+
+                            // --> AHORA METRAJE Y NIVEL SON DINÁMICOS <--
+                            FeatureItem(title = "Metraje", value = "${propertyMetraje}m²", iconResId = R.drawable.ic_metraje)
+                            FeatureItem(title = "Nivel", value = propertyNivel, iconResId = R.drawable.ic_nivel)
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -307,7 +379,7 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Hermoso apartamento moderno ubicado en el corazón de Zona 15. Cuenta con excelente iluminación natural, acabados de lujo, y está rodeado de naturaleza. Ideal para familias o profesionales que buscan comodidad y seguridad.",
+                            text = propertyDescription,
                             fontSize = 14.sp,
                             color = Color.DarkGray,
                             lineHeight = 22.sp
@@ -315,7 +387,7 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // 5. AMENIDADES
+                        // 5. AMENIDADES (AHORA DINÁMICAS)
                         Text(
                             text = "Amenidades",
                             fontSize = 18.sp,
@@ -324,12 +396,13 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AmenityItem(text = "Gimnasio equipado")
-                            AmenityItem(text = "Piscina climatizada")
-                            AmenityItem(text = "Seguridad 24/7")
-                            AmenityItem(text = "Área de coworking")
-                            AmenityItem(text = "Parqueo de visitas")
-                            AmenityItem(text = "Área de barbacoa (BBQ)")
+                            if (propertyAmenidades.isEmpty()) {
+                                Text("No hay amenidades registradas.", fontSize = 14.sp, color = Color.Gray)
+                            } else {
+                                propertyAmenidades.forEach { amenidad ->
+                                    AmenityItem(text = amenidad)
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -361,7 +434,6 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                            // --- TEXTO DINÁMICO ---
                             Text(
                                 text = propertyLocation,
                                 fontSize = 14.sp,
@@ -375,7 +447,18 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { /* Acción para abrir Google Maps */ },
+                                .clickable {
+                                    val uri = Uri.parse("geo:0,0?q=${Uri.encode(propertyLocation)}")
+                                    val mapIntent = Intent(Intent.ACTION_VIEW, uri)
+
+                                    try {
+                                        mapIntent.setPackage("com.google.android.apps.maps")
+                                        context.startActivity(mapIntent)
+                                    } catch (e: Exception) {
+                                        val fallbackIntent = Intent(Intent.ACTION_VIEW, uri)
+                                        context.startActivity(fallbackIntent)
+                                    }
+                                },
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Image(
@@ -401,7 +484,7 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                         HorizontalDivider(color = SurfaceGray, thickness = 1.dp)
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // 7. MANTENIMIENTO
+                        // 7. MANTENIMIENTO (AHORA DINÁMICO)
                         Text(
                             text = "Mantenimiento",
                             fontSize = 18.sp,
@@ -418,8 +501,9 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
                                 .padding(16.dp)
                         ) {
                             Column {
+                                val mantenimientoConComas = java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(propertyMantenimiento)
                                 Text(
-                                    text = "Q. 800 / mes",
+                                    text = "Q. $mantenimientoConComas / mes",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.DarkGray
@@ -440,7 +524,7 @@ fun PropertyDetailScreen(navController: NavController, propertyId: String) { // 
     )
 }
 
-// Sub-componentes (Intactos)
+// Sub-componentes
 @Composable
 fun FeatureItem(title: String, value: String, iconResId: Int) {
     Column(
