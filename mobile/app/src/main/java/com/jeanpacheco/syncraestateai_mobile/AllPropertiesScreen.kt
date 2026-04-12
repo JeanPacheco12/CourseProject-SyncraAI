@@ -52,6 +52,10 @@ fun AllPropertiesScreen(navController: NavController) {
         db.collection("properties").get().addOnSuccessListener { result ->
             val list = mutableListOf<Property>()
             for (document in result) {
+                // --- NUEVO: Extraemos la lista de imágenes y sacamos la primera ---
+                val gallery = document.get("imageGalleryUrlList") as? List<String> ?: emptyList()
+                val firstImageUrl = if (gallery.isNotEmpty()) gallery[0] else ""
+
                 list.add(Property(
                     id = document.id,
                     title = document.getString("title") ?: "Sin título",
@@ -60,7 +64,8 @@ fun AllPropertiesScreen(navController: NavController) {
                     interested = document.getLong("interested")?.toInt() ?: 0,
                     type = document.getString("type") ?: "Propiedad",
                     status = document.getString("status") ?: "Todas",
-                    imageRes = R.drawable.img_carrusel_1
+                    // ---> Adiós imageRes, hola imageUrl <---
+                    imageUrl = firstImageUrl
                 ))
             }
             propertiesList = list
@@ -212,7 +217,8 @@ fun AllPropertiesScreen(navController: NavController) {
                                 interested = prop.interested,
                                 location = prop.location,
                                 price = "Q. $precioConComas",
-                                imageRes = prop.imageRes,
+                                // ---> CAMBIO AQUÍ <---
+                                imageUrl = prop.imageUrl,
                                 onClick = {
                                     // AHORA ENVIAMOS EL ID DE LA PROPIEDAD
                                     navController.navigate("property_detail/${prop.id}")

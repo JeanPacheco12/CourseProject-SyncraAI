@@ -73,7 +73,10 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
     var clientDob by remember { mutableStateOf("") }
     var clientStatus by remember { mutableStateOf("Nuevo") }
     var isLoading by remember { mutableStateOf(true) }
-    var clientRequirement by remember { mutableStateOf("") }
+    var clientRequirement by remember { mutableStateOf("") } // <-- Tu código actual
+
+    // ---> 1. AGREGA ESTA LÍNEA NUEVA <---
+    var clientProfileImageUrl by remember { mutableStateOf("") }
 
     // --- DESCARGAR DATOS DESDE FIREBASE ---
     LaunchedEffect(clientId) {
@@ -92,7 +95,10 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
                         clientNationality = document.getString("nationality") ?: "N/A"
                         clientDob = document.getString("dob") ?: "N/A"
                         clientStatus = document.getString("status") ?: "Nuevo"
-                        clientRequirement = document.getString("requirement") ?: "N/A" // <-- ¡AGREGA ESTA LÍNEA TAMBIÉN!
+                        clientRequirement = document.getString("requirement") ?: "N/A"
+
+                        // ---> 2. AGREGA ESTA LÍNEA NUEVA <---
+                        clientProfileImageUrl = document.getString("profileImageUrl") ?: ""
                     }
                     isLoading = false
                 }
@@ -146,11 +152,15 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Image(
-                    painter = painterResource(id = R.drawable.img_prospecto_1), // Podremos hacerlo dinámico luego
+                // ---> 3. MAGIA DE COIL AQUÍ <---
+                coil.compose.AsyncImage(
+                    model = clientProfileImageUrl,
                     contentDescription = "Foto de perfil",
                     modifier = Modifier.size(110.dp).clip(CircleShape),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    // Si no hay foto en Firebase o tarda en cargar, se muestra tu imagen quemada
+                    placeholder = painterResource(id = R.drawable.img_prospecto_1),
+                    error = painterResource(id = R.drawable.img_prospecto_1)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

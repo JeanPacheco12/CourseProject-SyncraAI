@@ -39,6 +39,9 @@ fun AgentProfileScreen(navController: NavController) {
     // --- 1. ESTADO PARA GUARDAR EL NOMBRE (Empieza diciendo "Cargando...") ---
     var agentName by remember { mutableStateOf("Cargando...") }
 
+    // ---> 1. AGREGA ESTA LÍNEA NUEVA AQUÍ <---
+    var agentProfileImageUrl by remember { mutableStateOf("") }
+
     // --- 2. LÓGICA DE CONEXIÓN A FIRESTORE ---
     // LaunchedEffect(Unit) hace que esto se ejecute UNA SOLA VEZ cuando se abre la pantalla.
     LaunchedEffect(Unit) {
@@ -56,6 +59,12 @@ fun AgentProfileScreen(navController: NavController) {
                         val doc = documents.documents[0]
                         val nombre = doc.getString("nombre") ?: ""
                         val apellido = doc.getString("apellido") ?: ""
+
+                        // Actualizamos la variable de estado con el nombre completo
+                        agentName = "$nombre $apellido"
+
+                        // ---> 2. AGREGA ESTA LÍNEA NUEVA AQUÍ <---
+                        agentProfileImageUrl = doc.getString("profileImageUrl") ?: ""
 
                         // Actualizamos la variable de estado con el nombre completo
                         agentName = "$nombre $apellido"
@@ -98,14 +107,18 @@ fun AgentProfileScreen(navController: NavController) {
 
             // FOTO DE PERFIL CON MARCO VERDE
             Box(contentAlignment = Alignment.BottomEnd) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_perfil_agente),
+                // ---> 3. MAGIA DE COIL AQUÍ <---
+                coil.compose.AsyncImage(
+                    model = agentProfileImageUrl,
                     contentDescription = "Foto Agente",
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
                         .background(SurfaceGray),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    // Dejamos tu imagen de agente como placeholder por si falla el internet
+                    placeholder = painterResource(id = R.drawable.img_perfil_agente),
+                    error = painterResource(id = R.drawable.img_perfil_agente)
                 )
                 // Indicador de "Online" o Verificado
                 Box(

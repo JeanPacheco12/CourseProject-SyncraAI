@@ -56,7 +56,9 @@ fun AgendaScreen(navController: NavController) {
                                 "id" to document.id,
                                 "name" to (document.getString("name") ?: "Sin nombre"),
                                 "location" to (document.getString("location") ?: "Sin ubicación"),
-                                "time" to (document.getString("time") ?: "Por confirmar")
+                                "time" to (document.getString("time") ?: "Por confirmar"),
+                                // ---> 1. AGREGA ESTA LÍNEA NUEVA <---
+                                "photo" to (document.getString("profileImageUrl") ?: "")
                             )
                         )
                     }
@@ -164,6 +166,8 @@ fun AgendaScreen(navController: NavController) {
                             clientName = client["name"] ?: "",
                             location = client["location"] ?: "",
                             time = client["time"] ?: "Por confirmar",
+                            // ---> 2. AGREGA ESTA LÍNEA NUEVA <---
+                            photoUrl = client["photo"] ?: "",
                             onClick = { navController.navigate("client_profile/${client["id"]}") }
                         )
                     }
@@ -173,8 +177,9 @@ fun AgendaScreen(navController: NavController) {
     }
 }
 
+// ---> 3. CAMBIAMOS LA FUNCIÓN Y USAMOS COIL <---
 @Composable
-fun AgendaListItemCard(clientName: String, location: String, time: String, onClick: () -> Unit) {
+fun AgendaListItemCard(clientName: String, location: String, time: String, photoUrl: String, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceGray),
@@ -186,11 +191,13 @@ fun AgendaListItemCard(clientName: String, location: String, time: String, onCli
             modifier = Modifier.padding(12.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.propiedad_agenda_1),
-                contentDescription = null,
+            coil.compose.AsyncImage(
+                model = photoUrl,
+                contentDescription = "Foto de la cita",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(16.dp))
+                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(16.dp)),
+                placeholder = painterResource(id = R.drawable.propiedad_agenda_1),
+                error = painterResource(id = R.drawable.propiedad_agenda_1)
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {

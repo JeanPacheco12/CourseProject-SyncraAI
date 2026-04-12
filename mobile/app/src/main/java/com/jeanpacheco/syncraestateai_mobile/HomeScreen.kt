@@ -70,6 +70,8 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = view
     var showNotifications by remember { mutableStateOf(false) }
     // --- NUEVO: ESTADO PARA EL NOMBRE DEL AGENTE ---
     var agentFirstName by remember { mutableStateOf("...") }
+    // --- 1. AGREGA ESTA LÍNEA ---
+    var agentProfileImageUrl by remember { mutableStateOf("") }
 
     // --- NUEVO: DESCARGAR NOMBRE DESDE FIRESTORE ---
     LaunchedEffect(Unit) {
@@ -82,11 +84,10 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = view
                 .addOnSuccessListener { documents ->
                     if (!documents.isEmpty) {
                         val doc = documents.documents[0]
-                        // Solo sacamos el nombre (sin apellido) para el saludo del Home
-                        val nombre = doc.getString("nombre") ?: "Agente"
-                        agentFirstName = nombre
-                    } else {
-                        agentFirstName = "Agente"
+                        agentFirstName = doc.getString("nombre") ?: "Agente"
+
+                        // --- 2. AGREGA ESTA LÍNEA ---
+                        agentProfileImageUrl = doc.getString("profileImageUrl") ?: ""
                     }
                 }
                 .addOnFailureListener {
@@ -154,7 +155,8 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = view
                 // 2. CONTENIDO SOBRE EL FONDO CURVO
                 Column(modifier = Modifier.fillMaxWidth()) {
                     HeaderSection(
-                        agentFirstName = agentFirstName, // <-- ¡NUEVA LÍNEA! LE PASAMOS EL NOMBRE
+                        agentFirstName = agentFirstName,
+                        agentProfileImageUrl = agentProfileImageUrl,
                         hasUnreadNotifications = hasUnreadNotifications,
                         onBellClick = {
                             homeViewModel.markAsRead()
@@ -339,8 +341,9 @@ fun NotificationItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeaderSection(
-    agentFirstName: String, // <-- NUEVO: Recibe el nombre
-    hasUnreadNotifications: Boolean, // <-- NUEVO: Recibe el estado
+    agentFirstName: String,
+    agentProfileImageUrl: String,
+    hasUnreadNotifications: Boolean,
     onBellClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
@@ -397,14 +400,18 @@ fun HeaderSection(
                 // ESPACIO HORIZONTAL entre la campana y la foto (cambié height por width)
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Image(
-                    painter = painterResource(id = R.drawable.img_perfil_agente),
+                // ---> 2. USAMOS COIL PARA LA FOTO DINÁMICA <---
+                coil.compose.AsyncImage(
+                    model = agentProfileImageUrl,
                     contentDescription = "Foto de Perfil",
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .clickable { onProfileClick() },
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    // Mientras carga o si hay error, usamos tu imagen local
+                    placeholder = painterResource(id = R.drawable.img_perfil_agente),
+                    error = painterResource(id = R.drawable.img_perfil_agente)
                 )
             }
         }
@@ -612,16 +619,23 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String, s
         db.collection("properties").get().addOnSuccessListener { result ->
             val list = mutableListOf<Property>()
             for (document in result) {
+                // Extraemos la lista de imágenes de Firebase
+                val imagesList = document.get("images") as? List<String>
+                // Tomamos la primera imagen del array, o un string vacío si no hay
+                val firstImage = imagesList?.firstOrNull() ?: ""
+
                 list.add(Property(
                     id = document.id,
                     title = document.getString("title") ?: "Sin título",
                     price = document.getLong("price") ?: 0L,
                     location = document.getString("location") ?: "Sin ubicación",
+
+                    // ---> 1. AGREGA ESTAS TRES LÍNEAS PARA ARREGLAR EL FILTRO Y CONTADOR <---
                     interested = document.getLong("interested")?.toInt() ?: 0,
-                    type = document.getString("type") ?: "Propiedad",
-                    // --- NUEVO: Extraemos el status de Firebase ---
                     status = document.getString("status") ?: "Todas",
-                    imageRes = R.drawable.img_carrusel_1
+                    type = document.getString("type") ?: "Propiedad",
+
+                    imageUrl = firstImage
                 ))
             }
             propertiesList = list
@@ -629,14 +643,12 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String, s
         }.addOnFailureListener { isLoading = false }
     }
 
-    // --- FILTRO DOBLE: BUSCADOR + CATEGORÍA ---
     val filteredProperties = propertiesList.filter { prop ->
         val matchesSearch = if (searchQuery.isBlank()) true else {
             prop.title.contains(searchQuery, ignoreCase = true) ||
                     prop.location.contains(searchQuery, ignoreCase = true)
         }
         val matchesCategory = if (selectedCategory == "Todas") true else {
-            // Comparamos ignorando mayúsculas/minúsculas por si en Firebase está como "pendientes"
             prop.status.equals(selectedCategory, ignoreCase = true)
         }
         matchesSearch && matchesCategory
@@ -674,9 +686,9 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String, s
                         interested = prop.interested,
                         location = prop.location,
                         price = "Q. $precioConComas",
-                        imageRes = prop.imageRes,
+                        // Pasamos el URL a la tarjeta
+                        imageUrl = prop.imageUrl,
                         onClick = {
-                            // AHORA ENVIAMOS EL ID DE LA PROPIEDAD
                             navController.navigate("property_detail/${prop.id}")
                         }
                     )
@@ -687,7 +699,7 @@ fun ActivePropertiesSection(navController: NavController, searchQuery: String, s
 }
 
 @Composable
-fun PropertyCard(type: String, title: String, interested: Int, location: String, price: String, imageRes: Int, onClick: () -> Unit = {}) {
+fun PropertyCard(type: String, title: String, interested: Int, location: String, price: String, imageUrl: String, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier.width(350.dp).clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
@@ -695,7 +707,21 @@ fun PropertyCard(type: String, title: String, interested: Int, location: String,
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.width(130.dp).height(150.dp).clip(RoundedCornerShape(16.dp))) {
-                Image(painter = painterResource(id = imageRes), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+
+                // ---> MAGIA COIL AQUÍ: Reemplazamos Image por AsyncImage <---
+                coil.compose.AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp) // O el alto que tengas configurado
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop,
+                    // Imagen por defecto si el link falla
+                    placeholder = painterResource(id = R.drawable.propiedad_agenda_1),
+                    error = painterResource(id = R.drawable.propiedad_agenda_1)
+                )
+
                 Box(modifier = Modifier.align(Alignment.BottomStart).padding(8.dp).clip(RoundedCornerShape(8.dp)).background(SyncraPrimary.copy(alpha = 0.8f)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                     Text(text = type, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
@@ -774,7 +800,8 @@ fun ActiveProspectsSection(navController: NavController, searchQuery: String) {
                     time = document.getString("time") ?: "",
                     status = document.getString("status") ?: "Nuevo",
                     unread = document.getBoolean("unread") ?: false,
-                    imageRes = R.drawable.img_prospecto_1 // Imagen por defecto por ahora
+                    // ---> AHORA SÍ LEEMOS LA FOTO DE FIRESTORE <---
+                    profileImageUrl = document.getString("profileImageUrl") ?: ""
                 ))
             }
             clientsList = list
@@ -818,9 +845,9 @@ fun ActiveProspectsSection(navController: NavController, searchQuery: String) {
                 items(filteredProspects) { prospect ->
                     ProspectItem(
                         name = prospect.name,
-                        imageRes = prospect.imageRes,
+                        // ---> PASAMOS LA VARIABLE REAL AQUÍ <---
+                        profileImageUrl = prospect.profileImageUrl,
                         onClick = {
-                            // Navegamos al perfil dinámico enviando el ID
                             navController.navigate("client_profile/${prospect.id}")
                         }
                     )
@@ -831,12 +858,20 @@ fun ActiveProspectsSection(navController: NavController, searchQuery: String) {
 }
 
 @Composable
-fun ProspectItem(name: String, imageRes: Int, onClick: () -> Unit) { // <-- Agregamos onClick
+fun ProspectItem(name: String, profileImageUrl: String, onClick: () -> Unit) { // <-- Cambiamos imageRes por profileImageUrl
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(76.dp).clickable { onClick() } // <-- Lo hacemos clickable
+        modifier = Modifier.width(76.dp).clickable { onClick() }
     ) {
-        Image(painter = painterResource(id = imageRes), contentDescription = name, modifier = Modifier.size(64.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+        // --- MAGIA COIL AQUÍ ---
+        coil.compose.AsyncImage(
+            model = profileImageUrl,
+            contentDescription = name,
+            modifier = Modifier.size(64.dp).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(id = R.drawable.img_prospecto_1),
+            error = painterResource(id = R.drawable.img_prospecto_1)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = name, fontSize = 12.sp, color = SyncraPrimary, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, maxLines = 2)
     }
@@ -875,7 +910,9 @@ fun AgendaSection(navController: NavController, searchQuery: String) {
                         mapOf(
                             "id" to document.id,
                             "name" to (document.getString("name") ?: "Sin nombre"),
-                            "location" to (document.getString("location") ?: "Sin ubicación")
+                            "location" to (document.getString("location") ?: "Sin ubicación"),
+                            // ---> AGREGA ESTA LÍNEA <---
+                            "photoUrl" to (document.getString("profileImageUrl") ?: "")
                         )
                     )
                 }
@@ -946,6 +983,8 @@ fun AgendaSection(navController: NavController, searchQuery: String) {
                         time = "Por confirmar",
                         clientName = client["name"] ?: "",
                         location = client["location"] ?: "",
+                        // ---> AGREGA ESTA LÍNEA <---
+                        photoUrl = client["photoUrl"] ?: "",
                         onClick = {
                             navController.navigate("client_profile/${client["id"]}")
                         }
@@ -957,7 +996,7 @@ fun AgendaSection(navController: NavController, searchQuery: String) {
 }
 
 @Composable
-fun AgendaCard(dateTag: String, time: String, clientName: String, location: String, onClick: () -> Unit) {
+fun AgendaCard(dateTag: String, time: String, clientName: String, location: String, photoUrl: String, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceGray),
@@ -971,11 +1010,14 @@ fun AgendaCard(dateTag: String, time: String, clientName: String, location: Stri
                     .fillMaxWidth()
                     .height(80.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.propiedad_agenda_1),
-                    contentDescription = null,
+                // ---> 2. REEMPLAZA EL IMAGE NATIVO POR COIL <---
+                coil.compose.AsyncImage(
+                    model = photoUrl,
+                    contentDescription = "Foto de cita",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    placeholder = painterResource(id = R.drawable.propiedad_agenda_1),
+                    error = painterResource(id = R.drawable.propiedad_agenda_1)
                 )
                 Box(
                     modifier = Modifier
@@ -1005,10 +1047,11 @@ data class Property(
     val title: String = "",
     val price: Long = 0L,
     val location: String = "",
-    val type: String = "Casa",
-    val interested: Int = 5,
-    val imageRes: Int = R.drawable.propiedad_1,
-    val status: String // <-- ¡NUEVO CAMPO!
+    val interested: Int = 0,
+    val type: String = "Propiedad",
+    val status: String = "Todas",
+    // ---> AQUÍ ESTÁ EL CAMBIO (Adiós imageRes, hola imageUrl) <---
+    val imageUrl: String = ""
 )
 
 data class NotificationData(
@@ -1024,7 +1067,8 @@ data class Client(
     val name: String = "",
     val requirement: String = "",
     val time: String = "",
-    val status: String = "Nuevo", // Aquí vendrá: "Firma hoy", "Visita hoy", etc.
-    val imageRes: Int = R.drawable.img_prospecto_1, // Imagen por defecto
+    val status: String = "Nuevo",
+    // ---> AQUÍ ESTÁ EL CAMBIO <---
+    val profileImageUrl: String = "", // Imagen por defecto vacía para que Coil use el placeholder
     val unread: Boolean = false
 )

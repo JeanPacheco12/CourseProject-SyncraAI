@@ -43,7 +43,6 @@ val ColorNuevo = Color(0xFFA13FC8)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientsScreen(navController: NavController) {
-    // ---> ¡AGREGA ESTA LÍNEA AQUÍ! <---
     val context = LocalContext.current
     // --- ESTADOS ELEVADOS (State Hoisting) ---
     var searchQuery by remember { mutableStateOf("") }
@@ -63,7 +62,7 @@ fun ClientsScreen(navController: NavController) {
                     requirement = document.getString("requirement") ?: "",
                     time = document.getString("time") ?: "",
                     status = document.getString("status") ?: "Nuevo",
-                    imageRes = R.drawable.img_prospecto_1
+                    profileImageUrl = document.getString("profileImageUrl") ?: ""
                 ))
             }
             clientsList = list
@@ -139,21 +138,18 @@ fun ClientsScreen(navController: NavController) {
                             else -> ColorNuevo
                         }
 
-                        // Dentro del LazyColumn { items(filteredClients) { client -> ...
                         ClientListCard(
                             name = client.name,
                             status = client.status,
                             propertyInfo = client.requirement,
                             date = client.time,
-                            imageRes = client.imageRes,
+                            profileImageUrl = client.profileImageUrl,
                             bgColor = bgColor,
                             onClick = {
                                 navController.navigate("client_profile/${client.id}")
                             },
-                            // --- NUEVA LÓGICA DE WHATSAPP ---
+                            // --- LÓGICA DE WHATSAPP ---
                             onWhatsappClick = {
-                                // Por ahora usamos un número de prueba.
-                                // ¡Luego puedes agregar el teléfono a tu modelo Client en Firebase!
                                 val phone = "50212345678"
                                 val url = "https://api.whatsapp.com/send?phone=$phone"
                                 try {
@@ -163,7 +159,6 @@ fun ClientsScreen(navController: NavController) {
                                     Toast.makeText(context, "WhatsApp no está instalado", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                            // ---------------------------------
                         )
                     }
                 }
@@ -267,10 +262,11 @@ fun ClientListCard(
     status: String,
     propertyInfo: String,
     date: String,
-    imageRes: Int,
+    // ---> CAMBIAMOS EL PARÁMETRO AQUÍ <---
+    profileImageUrl: String,
     bgColor: Color,
     onClick: () -> Unit,
-    onWhatsappClick: () -> Unit // <-- NUEVO PARÁMETRO
+    onWhatsappClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
@@ -278,7 +274,18 @@ fun ClientListCard(
         colors = CardDefaults.cardColors(containerColor = bgColor)
     ) {
         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Image(painter = painterResource(id = imageRes), contentDescription = name, modifier = Modifier.size(64.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+
+            // ---> MAGIA COIL AQUÍ: Reemplazamos Image por AsyncImage <---
+            coil.compose.AsyncImage(
+                model = profileImageUrl,
+                contentDescription = name,
+                modifier = Modifier.size(64.dp).clip(CircleShape),
+                contentScale = ContentScale.Crop,
+                // Usamos la silueta vacía como placeholder
+                placeholder = painterResource(id = R.drawable.img_prospecto_1),
+                error = painterResource(id = R.drawable.img_prospecto_1)
+            )
+
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -292,15 +299,11 @@ fun ClientListCard(
                 }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.height(64.dp)) {
-
-                // --- AQUÍ ESTÁ EL CAMBIO DEL CLICK ---
                 Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)).clickable {
                     onWhatsappClick()
                 }, contentAlignment = Alignment.Center) {
                     Icon(painter = painterResource(id = R.drawable.wsp_logo_1), contentDescription = "WhatsApp", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
-                // -------------------------------------
-
                 Text(text = date, fontSize = 10.sp, color = Color.White)
             }
         }
