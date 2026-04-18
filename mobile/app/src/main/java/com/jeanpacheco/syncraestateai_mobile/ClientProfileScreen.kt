@@ -73,10 +73,9 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
     var clientDob by remember { mutableStateOf("") }
     var clientStatus by remember { mutableStateOf("Nuevo") }
     var isLoading by remember { mutableStateOf(true) }
-    var clientRequirement by remember { mutableStateOf("") } // <-- Tu código actual
-
-    // ---> 1. AGREGA ESTA LÍNEA NUEVA <---
+    var clientRequirement by remember { mutableStateOf("") }
     var clientProfileImageUrl by remember { mutableStateOf("") }
+    var clientInterestedPropertyId by remember { mutableStateOf("") }
 
     // --- DESCARGAR DATOS DESDE FIREBASE ---
     LaunchedEffect(clientId) {
@@ -96,9 +95,8 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
                         clientDob = document.getString("dob") ?: "N/A"
                         clientStatus = document.getString("status") ?: "Nuevo"
                         clientRequirement = document.getString("requirement") ?: "N/A"
-
-                        // ---> 2. AGREGA ESTA LÍNEA NUEVA <---
                         clientProfileImageUrl = document.getString("profileImageUrl") ?: ""
+                        clientInterestedPropertyId = document.getString("interestedPropertyId") ?: ""
                     }
                     isLoading = false
                 }
@@ -237,7 +235,8 @@ fun ClientProfileScreen(navController: NavController, clientId: String) { // <--
                     navController = navController,
                     interest = clientInterest,
                     location = clientLocation,
-                    budget = clientBudget
+                    budget = clientBudget,
+                    propertyId = clientInterestedPropertyId
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -427,23 +426,74 @@ fun ProfileDataField(label: String, value: String) {
 }
 
 @Composable
-fun PropertyOfInterestCard(navController: NavController, interest: String, location: String, budget: String) {
+fun PropertyOfInterestCard(
+    navController: NavController,
+    interest: String, // Lo usamos como texto de carga por defecto
+    location: String,
+    budget: String,
+    propertyId: String
+) {
+    // Variables para guardar los datos REALES de la propiedad
+    var propertyImageUrl by remember { mutableStateOf("") }
+    var propertyTitle by remember { mutableStateOf(interest) }
+    var propertyLocation by remember { mutableStateOf(location) }
+    var propertyPrice by remember { mutableStateOf(budget) }
+
+    // Descargamos la foto y los datos exactos de esa propiedad
+    LaunchedEffect(propertyId) {
+        if (propertyId.isNotEmpty()) {
+            val db = FirebaseFirestore.getInstance()
+            db.collection("properties").document(propertyId).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        // 1. Traer la foto
+                        @Suppress("UNCHECKED_CAST")
+                        val imagesList = document.get("images") as? List<String>
+                        propertyImageUrl = imagesList?.firstOrNull() ?: ""
+
+                        // 2. Traer el título y ubicación reales
+                        document.getString("title")?.let { propertyTitle = it }
+                        document.getString("location")?.let { propertyLocation = it }
+
+                        // 3. Traer el precio y darle formato de moneda (Q. 1,200,000)
+                        val priceLong = document.getLong("price")
+                        if (priceLong != null) {
+                            propertyPrice = "Q. %,d".format(priceLong)
+                        }
+                    }
+                }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F6F9)),
-        onClick = { navController.navigate("property_detail/1") } // <- AQUÍ arreglamos el crasheo también
+        onClick = {
+            if (propertyId.isNotEmpty()) {
+                navController.navigate("property_detail/$propertyId")
+            }
+        }
     ) {
         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Image(painter = painterResource(id = R.drawable.propiedad_agenda_1), contentDescription = "Propiedad", modifier = Modifier.size(80.dp).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
+
+            coil.compose.AsyncImage(
+                model = propertyImageUrl,
+                contentDescription = "Propiedad de interés",
+                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.propiedad_agenda_1),
+                error = painterResource(id = R.drawable.propiedad_agenda_1)
+            )
+
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                // Aquí usamos las variables que le pasamos
-                Text(text = interest, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF234F68), maxLines = 2)
+                // ---> AHORA USAMOS LAS VARIABLES QUE DESCARGAMOS <---
+                Text(text = propertyTitle, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF234F68), maxLines = 2)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = location, fontSize = 13.sp, color = Color.Gray, maxLines = 1)
+                Text(text = propertyLocation, fontSize = 13.sp, color = Color.Gray, maxLines = 1)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = budget, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F))
+                Text(text = propertyPrice, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8BC83F))
             }
             Box(modifier = Modifier.size(16.dp).clip(CircleShape).background(Color(0xFF8BC83F)))
         }
