@@ -18,7 +18,7 @@ class AIPrefs(context: Context) {
 
     // Leer las opciones (con valores por defecto basados en la UI)
     fun getTone(): String = prefs.getString("TONE", "Formal") ?: "Formal"
-    fun getLength(): String = prefs.getString("LENGTH", "Corto (Ideal para WhatsApp)") ?: "Corto"
+    fun getLength(): String = prefs.getString("LENGTH", "Corto") ?: "Corto" // <-- Solo cambiamos el texto por defecto aquí
     fun getAutoGenerate(): Boolean = prefs.getBoolean("AUTO_GENERATE", true)
     fun getTranslate(): Boolean = prefs.getBoolean("TRANSLATE", false)
 }

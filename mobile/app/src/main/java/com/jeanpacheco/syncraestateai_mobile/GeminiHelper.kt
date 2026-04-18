@@ -1,43 +1,67 @@
 package com.jeanpacheco.syncraestateai_mobile
 
+import android.content.Context
 import com.google.ai.client.generativeai.GenerativeModel
-import android.content.Context // <-- ¡Este era el import que faltaba!
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import com.jeanpacheco.syncraestateai_mobile.BuildConfig.*
+// ---> NUEVOS IMPORTS PARA LEER EL USUARIO <---
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await // MUY IMPORTANTE PARA QUE FUNCIONE EL .await()
 
 object GeminiHelper {
 
     suspend fun generarSmartPitch(context: Context, datosCliente: String): String? {
         return try {
+            // ---> 1. OBTENER EL NOMBRE DEL AGENTE DESDE FIREBASE <---
+            var agentName = "Agente de Syncra Estate" // Nombre por defecto de seguridad
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+
+            // Si hay un usuario logueado, vamos a buscar su nombre a la colección "users"
+            if (currentUserId != null) {
+                val db = FirebaseFirestore.getInstance()
+                val userDoc = db.collection("users").document(currentUserId).get().await()
+
+                val nombre = userDoc.getString("nombre") ?: ""
+                val apellido = userDoc.getString("apellido") ?: ""
+
+                // Unimos nombre y apellido (Ej: "Jean Pacheco")
+                if (nombre.isNotEmpty()) {
+                    agentName = "$nombre $apellido".trim()
+                }
+            }
+
+            // ---> 2. CONFIGURACIÓN DEL MODELO <---
+            // Pasamos al modelo 2.5-flash para evitar alucinaciones con firmas falsas y mejorar el razonamiento
             val generativeModel = GenerativeModel(
                 modelName = "gemini-2.5-flash",
                 apiKey = BuildConfig.GEMINI_API_KEY
             )
 
-            // 1. Leemos las configuraciones de tu pantalla
+            // 3. Leemos las configuraciones de tu pantalla
             val prefs = AIPrefs(context)
             val tono = prefs.getTone()
             val longitud = prefs.getLength()
             val traducir = prefs.getTranslate()
 
-            // 2. Regla condicional para tu interruptor de traducción
+            // Regla condicional para tu interruptor de traducción
             val reglaTraduccion = if (traducir) {
-                "- IMPORTANTE: Detecta el idioma nativo de los datos del cliente y escribe la propuesta en ESE mismo idioma."
+                "- IDIOMA (¡CRÍTICO!): Analiza el idioma de las notas e intereses del cliente. Si el texto del cliente está en INGLÉS (ej. 'looking for a house'), DEBES redactar absolutamente todo el Smart Pitch en INGLÉS. Adapta tu idioma al del prospecto obligatoriamente."
             } else {
-                "- Escribe la propuesta en el idioma predeterminado de la plataforma (Español)."
+                "- IDIOMA: Redacta el mensaje estrictamente en Español, sin importar en qué idioma estén los datos del cliente."
             }
 
-            // 3. Armamos el Prompt exacto
+            // ---> 4. PROMPT MAESTRO DINÁMICO <---
             val promptMaestro = """
-            Eres un experto agente inmobiliario de Syncra Estate. Genera un Smart Pitch para este prospecto:
+            Eres un experto agente inmobiliario de Syncra Estate. Tu nombre real es $agentName.
+            Genera un Smart Pitch persuasivo, directo y listo para enviarse a este prospecto:
+            
             Datos del cliente: $datosCliente
             
             REGLAS ESTRICTAS DE REDACCIÓN:
             - Tono de comunicación: $tono.
             - Longitud requerida: $longitud.
+            - IMPORTANTE: Despídete y firma el mensaje al final utilizando obligatoriamente tu nombre ($agentName). NUNCA dejes marcadores de posición vacíos como [Tu Nombre], [Nombre del Agente] o similares.
             $reglaTraduccion
-        """.trimIndent()
+            """.trimIndent()
 
             val response = generativeModel.generateContent(promptMaestro)
             response.text

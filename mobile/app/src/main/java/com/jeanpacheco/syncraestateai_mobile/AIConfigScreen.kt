@@ -79,8 +79,15 @@ fun AIConfigScreen(navController: NavController) {
             Text(text = "Longitud del Smart Pitch", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = SyncraPrimary)
             Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                RadioOptionRow(text = "Corto (Ideal para WhatsApp)", isSelected = selectedLength == "Corto (WhatsApp)") { selectedLength = "Corto (WhatsApp)" }
-                RadioOptionRow(text = "Medio (Ideal para Correo Electrónico)", isSelected = selectedLength == "Medio (Email)") { selectedLength = "Medio (Email)" }
+                RadioOptionRow(
+                    text = "Corto (Directo y conciso)",
+                    isSelected = selectedLength == "Corto"
+                ) { selectedLength = "Corto" }
+
+                RadioOptionRow(
+                    text = "Detallado (Con info de la propiedad)",
+                    isSelected = selectedLength == "Detallado"
+                ) { selectedLength = "Detallado" }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
