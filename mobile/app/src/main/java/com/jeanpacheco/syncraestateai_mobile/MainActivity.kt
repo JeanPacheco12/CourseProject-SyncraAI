@@ -337,6 +337,11 @@ class MainActivity : ComponentActivity() {
                             val propertyId = backStackEntry.arguments?.getString("propertyId") ?: ""
                             EditPropertyScreen(navController = navController, propertyId = propertyId)
                         }
+
+                        // Ruta 13: Pantalla para la configuración local del agente (Perfil del agente)
+                        composable("settings") {
+                            SettingsScreen(navController = navController)
+                        }
                     }
                 }
             }

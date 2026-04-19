@@ -181,6 +181,12 @@ fun AgentProfileScreen(navController: NavController) {
                     onClick = { navController.navigate("support") }
                 )
 
+                ProfileOptionItem(
+                    text = "Configuración",
+                    icon = Icons.Default.Settings,
+                    onClick = { navController.navigate("settings") }
+                )
+
                 // BOTÓN: CERRAR SESIÓN
                 ProfileOptionItem(
                     text = "Cerrar sesión",
