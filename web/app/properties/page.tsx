@@ -5,21 +5,7 @@ import { useEffect, useState } from "react";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Link from "next/link";
-import {
-  Bell,
-  ChevronDown,
-  ClipboardList,
-  DollarSign,
-  Grid2x2,
-  Home,
-  LineChart,
-  Search,
-  Settings,
-  User,
-  Users,
-  CalendarDays,
-  Check,
-} from "lucide-react";
+import { Grid2x2, Home, Settings, User } from "lucide-react";
 
 type Property = {
   id: string;
@@ -33,12 +19,9 @@ type Property = {
 
 type Client = {
   id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  interest?: string;
   propertyId?: string;
 };
+
 function SidebarItem({
   icon,
   label,
@@ -84,7 +67,6 @@ export default function PropertiesPage() {
   const [locationFilter, setLocationFilter] = useState("Todas");
   const [priceOrder, setPriceOrder] = useState("default");
 
-  
   const fetchProperties = async () => {
     try {
       const propertiesSnapshot = await getDocs(collection(db, "properties"));
@@ -95,10 +77,6 @@ export default function PropertiesPage() {
 
         return {
           id: clientDoc.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          interest: data.interest,
           propertyId: data.propertyId,
         };
       });
@@ -106,9 +84,9 @@ export default function PropertiesPage() {
       const data: Property[] = propertiesSnapshot.docs.map((docItem) => {
         const propertyData = docItem.data() as Omit<Property, "id" | "interested">;
 
-        const interestedCount = clientsData.filter((client) => {
-          return client.propertyId === docItem.id;
-        }).length;
+        const interestedCount = clientsData.filter(
+          (client) => client.propertyId === docItem.id
+        ).length;
 
         return {
           id: docItem.id,
@@ -139,6 +117,7 @@ export default function PropertiesPage() {
       alert("No se pudo eliminar la propiedad");
     }
   };
+
   useEffect(() => {
     fetchProperties();
   }, []);
@@ -146,6 +125,7 @@ export default function PropertiesPage() {
   const locationOptions = Array.from(
     new Set(properties.map((property) => property.location).filter(Boolean))
   );
+
   const filteredProperties = [...properties]
     .filter((property) => {
       const term = searchTerm.trim().toLowerCase();
@@ -169,32 +149,32 @@ export default function PropertiesPage() {
       if (priceOrder === "desc") return b.price - a.price;
       return 0;
     });
+
   const clearFilters = () => {
     setSearchTerm("");
     setStatusFilter("Todos");
     setLocationFilter("Todas");
     setPriceOrder("default");
   };
-    
 
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
       <div className="flex min-h-screen">
         <aside className="hidden w-[290px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
-           <div className="flex flex-col items-center px-8 pb-8 pt-10">
-                      <div className="relative mb-5 h-[90px] w-[150px]">
-                        <Image
-                          src="/logo-syncra.png"
-                          alt="Syncra Estate AI"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-          
-                      <h2 className="text-[20px] font-semibold text-slate-800">
-                        Syncra Estate AI
-                      </h2>
-              </div>
+          <div className="flex flex-col items-center px-8 pb-8 pt-10">
+            <div className="relative mb-5 h-[90px] w-[150px]">
+              <Image
+                src="/logo-syncra.png"
+                alt="Syncra Estate AI"
+                fill
+                className="object-contain"
+              />
+            </div>
+
+            <h2 className="text-[20px] font-semibold text-slate-800">
+              Syncra Estate AI
+            </h2>
+          </div>
 
           <nav className="flex-1 space-y-2 px-5">
             <Link href="/dashboard">
@@ -203,6 +183,7 @@ export default function PropertiesPage() {
                 label="Dashboard"
               />
             </Link>
+
             <Link href="/properties">
               <SidebarItem
                 icon={<Grid2x2 className="h-5 w-5" />}
@@ -210,37 +191,20 @@ export default function PropertiesPage() {
                 active
               />
             </Link>
+
             <Link href="/contacts">
               <SidebarItem
                 icon={<User className="h-5 w-5" />}
                 label="Contactos"
               />
             </Link>
-            <SidebarItem
-              icon={<ClipboardList className="h-5 w-5" />}
-              label="Citas"
-            />
-            <SidebarItem
-              icon={<LineChart className="h-5 w-5" />}
-              label="Reportes"
-            />
-            <SidebarItem
-              icon={<Settings className="h-5 w-5" />}
-              label="Ajustes"
-            />
           </nav>
 
-          <div className="px-4 py-6">
-            <a
-              href="#"
-              className="flex items-center justify-between rounded-2xl px-5 py-4 text-[18px] text-slate-600 transition hover:bg-slate-50"
-            >
-              <div className="flex items-center gap-4">
-                <span className="text-xl">⚙</span>
-                <span>Ajustes</span>
-              </div>
-              <span>⌄</span>
-            </a>
+          <div className="px-5 pb-8 pt-4">
+            <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium text-slate-500">
+              <Settings className="h-5 w-5" />
+              <span>Ajustes</span>
+            </div>
           </div>
         </aside>
 
@@ -254,24 +218,6 @@ export default function PropertiesPage() {
                 <p className="mt-3 text-xl text-slate-500">
                   Administra las propiedades disponibles y su estado actual.
                 </p>
-              </div>
-
-              <div className="flex items-center gap-5 self-start">
-
-                <button className="relative text-2xl text-slate-400">
-                  🔔
-                  <span className="absolute right-0 top-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-[#f6f7fb]" />
-                </button>
-
-                <div className="h-14 w-14 overflow-hidden rounded-full bg-slate-200">
-                  <Image
-                    src="/google.png"
-                    alt="Avatar"
-                    width={56}
-                    height={56}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
               </div>
             </div>
           </header>
@@ -317,6 +263,7 @@ export default function PropertiesPage() {
                   ))}
                 </select>
               </div>
+
               <div className="flex h-14 min-w-[250px] items-center rounded-2xl border border-slate-200 bg-white px-5">
                 <select
                   value={priceOrder}
@@ -338,207 +285,221 @@ export default function PropertiesPage() {
             </div>
 
             <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm">
-  <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 text-[18px] text-slate-400">
-    <div className="flex items-center gap-4">
-      <span>
-        <span className="font-semibold text-slate-700">Propiedades</span>{" "}
-        {filteredProperties.length} registradas
-      </span>
-    </div>
-
-    <button
-      onClick={clearFilters}
-      className="font-medium text-slate-500 transition hover:text-slate-700"
-    >
-      Limpiar filtros
-    </button>
-  </div>
-
-  {filteredProperties.length === 0 ? (
-    <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-4xl">
-        🏠
-      </div>
-
-      <h2 className="text-2xl font-semibold text-slate-800">
-        {properties.length === 0
-          ? "Aún no hay propiedades registradas"
-          : "No se encontraron propiedades"}
-      </h2>
-
-      <p className="mt-3 max-w-xl text-[17px] text-slate-500">
-        {properties.length === 0
-          ? "Empieza agregando tu primera propiedad para visualizarla aquí y administrarla dentro del sistema."
-          : "Prueba cambiando la búsqueda o limpiando los filtros para ver más resultados."}
-      </p>
-
-      {properties.length === 0 && (
-        <a
-          href="/properties/new"
-          className="mt-6 rounded-2xl bg-[#8bb58f] px-6 py-3 text-[17px] font-semibold text-white transition hover:opacity-90"
-        >
-          + Crear primera propiedad
-        </a>
-      )}
-    </div>
-  ) : (
-    <>
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[980px]">
-          <thead className="bg-[#fafbfc]">
-            <tr className="border-b border-slate-200 text-left text-[16px] text-slate-500">
-              <th className="px-6 py-4 font-semibold">ID</th>
-              <th className="px-6 py-4 font-semibold">Propiedad</th>
-              <th className="px-6 py-4 font-semibold">Tipo</th>
-              <th className="px-6 py-4 font-semibold">Ubicación</th>
-              <th className="px-6 py-4 font-semibold">Precio</th>
-              <th className="px-6 py-4 font-semibold">Estado</th>
-              <th className="px-6 py-4 font-semibold">Interesados</th>
-              <th className="px-6 py-4 font-semibold">Acciones</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredProperties.map((property) => (
-              <tr
-                key={property.id}
-                className="border-b border-slate-100 text-[17px] text-slate-700"
-              >
-                <td className="px-6 py-5 text-slate-500">{property.id}</td>
-
-                <td className="px-6 py-5">
-                  <div className="flex items-center gap-4">
-                    <div className="relative h-[52px] w-[102px] overflow-hidden rounded-xl bg-slate-200">
-                      <Image
-                        src="/bg-login.png"
-                        alt={property.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <span className="font-medium text-slate-800">
-                      {property.title}
-                    </span>
-                  </div>
-                </td>
-
-                <td className="px-6 py-5 text-slate-500">{property.type}</td>
-
-                <td className="px-6 py-5 text-slate-500">
-                  {property.location}
-                </td>
-
-                <td className="px-6 py-5 font-medium text-slate-800">
-                  Q{property.price.toLocaleString()}
-                </td>
-
-                <td className="px-6 py-5">
-                  <span
-                    className={`inline-flex rounded-full px-4 py-2 text-[15px] font-semibold ${getStatusClasses(
-                      property.status
-                    )}`}
-                  >
-                    {property.status}
+              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 text-[18px] text-slate-400">
+                <div className="flex items-center gap-4">
+                  <span>
+                    <span className="font-semibold text-slate-700">
+                      Propiedades
+                    </span>{" "}
+                    {filteredProperties.length} registradas
                   </span>
-                </td>
+                </div>
 
-                <td className="px-6 py-5 text-center text-slate-600">
-                  {property.interested}
-                </td>
-
-                <td className="px-6 py-5">
-                  <div className="flex items-center gap-6 text-slate-500">
-                    <a
-                      href={`/properties/${property.id}`}
-                      className="transition hover:text-slate-800"
-                    >
-                      👁 Ver
-                    </a>
-                    <a
-                      href={`/properties/edit/${property.id}`}
-                      className="transition hover:text-slate-800"
-                    >
-                      ✎ Editar
-                    </a>
-                    <button
-                      onClick={() => handleDelete(property.id, property.title)}
-                      className="transition hover:text-red-600"
-                    >
-                      🗑 Eliminar
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="space-y-4 p-4 lg:hidden">
-       {filteredProperties.map((property) => (
-          <div
-            key={property.id}
-            className="rounded-2xl border border-slate-200 p-4"
-          >
-            <div className="flex gap-4">
-              <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-200">
-                <Image
-                  src="/bg-login.png"
-                  alt={property.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-slate-400">ID {property.id}</p>
-                <h3 className="truncate text-lg font-semibold text-slate-800">
-                  {property.title}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  {property.location}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">{property.type}</p>
-                <p className="mt-2 font-semibold text-slate-800">
-                  Q{property.price.toLocaleString()}
-                </p>
-                <span
-                  className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusClasses(
-                    property.status
-                  )}`}
-                >
-                  {property.status}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
-              <span>Interesados: {property.interested}</span>
-              <div className="flex gap-4">
-                <a href={`/properties/${property.id}`}>Ver</a>
-                <a href={`/properties/edit/${property.id}`}>Editar</a>
                 <button
-                  onClick={() => handleDelete(property.id, property.title)}
-                  className="text-red-600"
+                  onClick={clearFilters}
+                  className="font-medium text-slate-500 transition hover:text-slate-700"
                 >
-                  Eliminar
+                  Limpiar filtros
                 </button>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      <div className="flex items-center justify-end gap-3 px-6 py-5">
-        <button className="text-lg text-slate-400">‹</button>
-        <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8bb58f] font-semibold text-white">
-          1
-        </button>
-        <button className="text-lg text-slate-400">›</button>
-      </div>
-    </>
-  )}
-</div>
+              {filteredProperties.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+                  <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-4xl">
+                    🏠
+                  </div>
+
+                  <h2 className="text-2xl font-semibold text-slate-800">
+                    {properties.length === 0
+                      ? "Aún no hay propiedades registradas"
+                      : "No se encontraron propiedades"}
+                  </h2>
+
+                  <p className="mt-3 max-w-xl text-[17px] text-slate-500">
+                    {properties.length === 0
+                      ? "Empieza agregando tu primera propiedad para visualizarla aquí y administrarla dentro del sistema."
+                      : "Prueba cambiando la búsqueda o limpiando los filtros para ver más resultados."}
+                  </p>
+
+                  {properties.length === 0 && (
+                    <a
+                      href="/properties/new"
+                      className="mt-6 rounded-2xl bg-[#8bb58f] px-6 py-3 text-[17px] font-semibold text-white transition hover:opacity-90"
+                    >
+                      + Crear primera propiedad
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="hidden overflow-x-auto lg:block">
+                    <table className="w-full min-w-[980px]">
+                      <thead className="bg-[#fafbfc]">
+                        <tr className="border-b border-slate-200 text-left text-[16px] text-slate-500">
+                          <th className="px-6 py-4 font-semibold">ID</th>
+                          <th className="px-6 py-4 font-semibold">Propiedad</th>
+                          <th className="px-6 py-4 font-semibold">Tipo</th>
+                          <th className="px-6 py-4 font-semibold">Ubicación</th>
+                          <th className="px-6 py-4 font-semibold">Precio</th>
+                          <th className="px-6 py-4 font-semibold">Estado</th>
+                          <th className="px-6 py-4 font-semibold">Interesados</th>
+                          <th className="px-6 py-4 font-semibold">Acciones</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {filteredProperties.map((property) => (
+                          <tr
+                            key={property.id}
+                            className="border-b border-slate-100 text-[17px] text-slate-700"
+                          >
+                            <td className="px-6 py-5 text-slate-500">
+                              {property.id}
+                            </td>
+
+                            <td className="px-6 py-5">
+                              <div className="flex items-center gap-4">
+                                <div className="relative h-[52px] w-[102px] overflow-hidden rounded-xl bg-slate-200">
+                                  <Image
+                                    src="/bg-login.png"
+                                    alt={property.title}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                                <span className="font-medium text-slate-800">
+                                  {property.title}
+                                </span>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-5 text-slate-500">
+                              {property.type}
+                            </td>
+
+                            <td className="px-6 py-5 text-slate-500">
+                              {property.location}
+                            </td>
+
+                            <td className="px-6 py-5 font-medium text-slate-800">
+                              Q{property.price.toLocaleString()}
+                            </td>
+
+                            <td className="px-6 py-5">
+                              <span
+                                className={`inline-flex rounded-full px-4 py-2 text-[15px] font-semibold ${getStatusClasses(
+                                  property.status
+                                )}`}
+                              >
+                                {property.status}
+                              </span>
+                            </td>
+
+                            <td className="px-6 py-5 text-center text-slate-600">
+                              {property.interested}
+                            </td>
+
+                            <td className="px-6 py-5">
+                              <div className="flex items-center gap-6 text-slate-500">
+                                <a
+                                  href={`/properties/${property.id}`}
+                                  className="transition hover:text-slate-800"
+                                >
+                                  👁 Ver
+                                </a>
+                                <a
+                                  href={`/properties/edit/${property.id}`}
+                                  className="transition hover:text-slate-800"
+                                >
+                                  ✎ Editar
+                                </a>
+                                <button
+                                  onClick={() =>
+                                    handleDelete(property.id, property.title)
+                                  }
+                                  className="transition hover:text-red-600"
+                                >
+                                  🗑 Eliminar
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="space-y-4 p-4 lg:hidden">
+                    {filteredProperties.map((property) => (
+                      <div
+                        key={property.id}
+                        className="rounded-2xl border border-slate-200 p-4"
+                      >
+                        <div className="flex gap-4">
+                          <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-200">
+                            <Image
+                              src="/bg-login.png"
+                              alt={property.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-slate-400">
+                              ID {property.id}
+                            </p>
+                            <h3 className="truncate text-lg font-semibold text-slate-800">
+                              {property.title}
+                            </h3>
+                            <p className="mt-1 text-sm text-slate-500">
+                              {property.location}
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              {property.type}
+                            </p>
+                            <p className="mt-2 font-semibold text-slate-800">
+                              Q{property.price.toLocaleString()}
+                            </p>
+                            <span
+                              className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusClasses(
+                                property.status
+                              )}`}
+                            >
+                              {property.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
+                          <span>Interesados: {property.interested}</span>
+                          <div className="flex gap-4">
+                            <a href={`/properties/${property.id}`}>Ver</a>
+                            <a href={`/properties/edit/${property.id}`}>Editar</a>
+                            <button
+                              onClick={() =>
+                                handleDelete(property.id, property.title)
+                              }
+                              className="text-red-600"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 px-6 py-5">
+                    <button className="text-lg text-slate-400">‹</button>
+                    <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8bb58f] font-semibold text-white">
+                      1
+                    </button>
+                    <button className="text-lg text-slate-400">›</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </section>
       </div>

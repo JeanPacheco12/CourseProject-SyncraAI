@@ -2,29 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
-import { collection, getDocs } from "firebase/firestore";
 import Link from "next/link";
 import {
-  Bell,
   ChevronDown,
-  ClipboardList,
   DollarSign,
   Grid2x2,
   Home,
-  LineChart,
-  Search,
-  Settings,
   User,
   Users,
-  CalendarDays,
   Check,
+  Settings,
 } from "lucide-react";
-
 
 function SidebarItem({
   icon,
@@ -98,7 +90,6 @@ type Property = {
   type: string;
   location: string;
   price: number;
-  status: string;
   interested: number;
 };
 
@@ -106,63 +97,66 @@ export default function DashboardPage() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
-  
+
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/");
   };
+
   useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      setUserProfile(null);
-      router.push("/");
-      return;
-    }
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setUserProfile(null);
+        router.push("/");
+        return;
+      }
 
-    try {
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
+      try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data() as UserProfile;
-        setUserProfile({
-          nombre: data.nombre || "",
-          apellido: data.apellido || "",
-          email: data.email || user.email || "",
-        });
-      } else {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as UserProfile;
+          setUserProfile({
+            nombre: data.nombre || "",
+            apellido: data.apellido || "",
+            email: data.email || user.email || "",
+          });
+        } else {
+          setUserProfile({
+            nombre: "",
+            apellido: "",
+            email: user.email || "",
+          });
+        }
+
+        const propertiesSnapshot = await getDocs(collection(db, "properties"));
+        const propertiesData: Property[] = propertiesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Property, "id">),
+        }));
+
+        setProperties(propertiesData);
+      } catch (error) {
+        console.error("Error al obtener datos del usuario:", error);
         setUserProfile({
           nombre: "",
           apellido: "",
           email: user.email || "",
         });
       }
-      const propertiesSnapshot = await getDocs(collection(db, "properties"));
-      const propertiesData: Property[] = propertiesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Property, "id">),
-      }));
+    });
 
-      setProperties(propertiesData);
-    } catch (error) {
-      console.error("Error al obtener datos del usuario:", error);
-      setUserProfile({
-        nombre: "",
-        apellido: "",
-        email: user.email || "",
-      });
-    }
-  });
-
-  return () => unsubscribe();
-}, [router]);
+    return () => unsubscribe();
+  }, [router]);
 
   const nombre = userProfile?.nombre || "Usuario";
   const apellido = userProfile?.apellido || "";
   const nombreCompleto = `${nombre} ${apellido}`.trim() || "Usuario";
+
   const totalInterested = properties.reduce(
-  (sum, property) => sum + property.interested,
-  0
+    (sum, property) => sum + property.interested,
+    0
   );
 
   return (
@@ -190,30 +184,20 @@ export default function DashboardPage() {
               label="Dashboard"
               active
             />
+
             <Link href="/properties">
               <SidebarItem
                 icon={<Grid2x2 className="h-5 w-5" />}
                 label="Propiedades"
               />
             </Link>
+
             <Link href="/contacts">
               <SidebarItem
                 icon={<User className="h-5 w-5" />}
                 label="Contactos"
               />
             </Link>
-            <SidebarItem
-              icon={<ClipboardList className="h-5 w-5" />}
-              label="Citas"
-            />
-            <SidebarItem
-              icon={<LineChart className="h-5 w-5" />}
-              label="Reportes"
-            />
-            <SidebarItem
-              icon={<Settings className="h-5 w-5" />}
-              label="Ajustes"
-            />
           </nav>
 
           <div className="px-5 pb-8 pt-4">
@@ -228,41 +212,7 @@ export default function DashboardPage() {
         </aside>
 
         <section className="flex-1">
-          <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-5">
-            <div className="flex items-center gap-4">
-              <Image
-                src="/avatar-user.png"
-                alt="User avatar"
-                width={48}
-                height={48}
-                className="rounded-full object-cover"
-              />
-            </div>
-
-            <div className="flex items-center gap-5">
-              <div className="flex h-[54px] w-[280px] items-center gap-3 rounded-2xl border border-slate-200 bg-[#fafafa] px-4">
-                <Search className="h-5 w-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="w-full bg-transparent text-[16px] outline-none placeholder:text-slate-400"
-                />
-              </div>
-
-              <div className="relative">
-                <Bell className="h-6 w-6 text-slate-400" />
-                <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-green-500" />
-              </div>
-
-              <Image
-                src="/avatar-user.png"
-                alt="Profile"
-                width={48}
-                height={48}
-                className="rounded-full object-cover"
-              />
-            </div>
-          </header>
+          <header className="border-b border-slate-200 bg-white px-8 py-5" />
 
           <div className="p-8">
             <div className="mb-8 flex items-start justify-between gap-6">
