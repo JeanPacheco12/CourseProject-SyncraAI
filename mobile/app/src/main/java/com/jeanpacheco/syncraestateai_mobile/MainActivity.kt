@@ -338,10 +338,6 @@ class MainActivity : ComponentActivity() {
                             EditPropertyScreen(navController = navController, propertyId = propertyId)
                         }
 
-                        // Ruta 13: Pantalla para la configuración local del agente (Perfil del agente)
-                        composable("settings") {
-                            SettingsScreen(navController = navController)
-                        }
                     }
                 }
             }

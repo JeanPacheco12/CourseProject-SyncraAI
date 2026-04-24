@@ -171,7 +171,7 @@ fun AgentProfileScreen(navController: NavController) {
 
                 ProfileOptionItem(
                     text = "Configuración de IA",
-                    icon = Icons.Default.Star,
+                    icon = Icons.Default.Settings,
                     onClick = { navController.navigate("ai_config") }
                 )
 
@@ -179,12 +179,6 @@ fun AgentProfileScreen(navController: NavController) {
                     text = "Ayuda y Soporte",
                     icon = Icons.Default.Email,
                     onClick = { navController.navigate("support") }
-                )
-
-                ProfileOptionItem(
-                    text = "Configuración",
-                    icon = Icons.Default.Settings,
-                    onClick = { navController.navigate("settings") }
                 )
 
                 // BOTÓN: CERRAR SESIÓN
