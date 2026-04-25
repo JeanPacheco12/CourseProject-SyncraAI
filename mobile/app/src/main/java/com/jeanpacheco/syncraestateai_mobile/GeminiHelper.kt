@@ -30,9 +30,9 @@ object GeminiHelper {
             }
 
             // ---> 2. CONFIGURACIÓN DEL MODELO <---
-            // Pasamos al modelo 2.5-flash para evitar alucinaciones con firmas falsas y mejorar el razonamiento
+            // Pasamos al modelo 2.5-flash-lite para evitar alucinaciones con firmas falsas y mejorar el razonamiento
             val generativeModel = GenerativeModel(
-                modelName = "gemini-2.5-flash",
+                modelName = "gemini-2.5-flash-lite",
                 apiKey = BuildConfig.GEMINI_API_KEY
             )
 
@@ -65,9 +65,9 @@ object GeminiHelper {
 
             val response = generativeModel.generateContent(promptMaestro)
             response.text
-
+        // Estoy teniendo problemas con la generación del prompt, añadiré este catch para saber el error exacto.
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("GeminiError", "Excepción al generar pitch: ${e.message}", e)
             null
         }
     }
