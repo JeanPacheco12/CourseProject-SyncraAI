@@ -9,12 +9,15 @@ import { Grid2x2, Home, Settings, User } from "lucide-react";
 
 type Property = {
   id: string;
+  firestoreId: string;
   title: string;
   type: string;
   location: string;
   price: number;
   status: string;
   interested: number;
+  images?: string[];
+  imageGalleryUrlList?: string[];
 };
 
 type Client = {
@@ -48,16 +51,36 @@ function SidebarItem({
 function getStatusClasses(status: string) {
   switch (status) {
     case "Disponible":
+    case "Disponibles":
       return "bg-emerald-100 text-emerald-700";
     case "Reservado":
+    case "Reservados":
+    case "Pendiente":
+    case "Pendientes":
       return "bg-amber-100 text-amber-700";
     case "Vendido":
+    case "Vendidos":
       return "bg-slate-200 text-slate-600";
     case "Visitas":
       return "bg-sky-100 text-sky-700";
     default:
       return "bg-slate-100 text-slate-600";
   }
+}
+
+function getPropertyImage(property: Property) {
+  const image =
+    property.images?.[0]?.trim() ||
+    property.imageGalleryUrlList?.[0]?.trim() ||
+    "";
+
+  if (!image) return "/bg-login.png";
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return "/bg-login.png";
 }
 
 export default function PropertiesPage() {
@@ -82,16 +105,30 @@ export default function PropertiesPage() {
       });
 
       const data: Property[] = propertiesSnapshot.docs.map((docItem) => {
-        const propertyData = docItem.data() as Omit<Property, "id" | "interested">;
+        const propertyData = docItem.data() as Partial<Property>;
+
+        const savedPropertyId = propertyData.id || docItem.id;
 
         const interestedCount = clientsData.filter(
-          (client) => client.propertyId === docItem.id
+          (client) =>
+            client.propertyId === savedPropertyId ||
+            client.propertyId === docItem.id
         ).length;
 
         return {
-          id: docItem.id,
-          ...propertyData,
-          interested: interestedCount,
+          firestoreId: docItem.id,
+          id: savedPropertyId,
+          title: propertyData.title || "",
+          type: propertyData.type || "",
+          location: propertyData.location || "",
+          price: Number(propertyData.price || 0),
+          status: propertyData.status || "Disponible",
+          interested:
+            interestedCount > 0
+              ? interestedCount
+              : Number(propertyData.interested || 0),
+          images: propertyData.images || [],
+          imageGalleryUrlList: propertyData.imageGalleryUrlList || [],
         };
       });
 
@@ -101,7 +138,7 @@ export default function PropertiesPage() {
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
+  const handleDelete = async (firestoreId: string, title: string) => {
     const confirmed = window.confirm(
       `¿Seguro que deseas eliminar la propiedad "${title}"?`
     );
@@ -109,7 +146,7 @@ export default function PropertiesPage() {
     if (!confirmed) return;
 
     try {
-      await deleteDoc(doc(db, "properties", id));
+      await deleteDoc(doc(db, "properties", firestoreId));
       await fetchProperties();
       alert("Propiedad eliminada correctamente");
     } catch (error) {
@@ -178,10 +215,7 @@ export default function PropertiesPage() {
 
           <nav className="flex-1 space-y-2 px-5">
             <Link href="/dashboard">
-              <SidebarItem
-                icon={<Home className="h-5 w-5" />}
-                label="Dashboard"
-              />
+              <SidebarItem icon={<Home className="h-5 w-5" />} label="Dashboard" />
             </Link>
 
             <Link href="/properties">
@@ -193,10 +227,7 @@ export default function PropertiesPage() {
             </Link>
 
             <Link href="/contacts">
-              <SidebarItem
-                icon={<User className="h-5 w-5" />}
-                label="Contactos"
-              />
+              <SidebarItem icon={<User className="h-5 w-5" />} label="Contactos" />
             </Link>
           </nav>
 
@@ -210,16 +241,12 @@ export default function PropertiesPage() {
 
         <section className="flex-1">
           <header className="border-b border-slate-200 bg-[#f6f7fb] px-8 py-7">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-              <div>
-                <h1 className="text-5xl font-semibold tracking-tight text-slate-800">
-                  Propiedades
-                </h1>
-                <p className="mt-3 text-xl text-slate-500">
-                  Administra las propiedades disponibles y su estado actual.
-                </p>
-              </div>
-            </div>
+            <h1 className="text-5xl font-semibold tracking-tight text-slate-800">
+              Propiedades
+            </h1>
+            <p className="mt-3 text-xl text-slate-500">
+              Administra las propiedades disponibles y su estado actual.
+            </p>
           </header>
 
           <div className="px-8 py-6">
@@ -242,10 +269,11 @@ export default function PropertiesPage() {
                   className="w-full bg-transparent text-[18px] text-slate-700 outline-none"
                 >
                   <option value="Todos">Estado: Todos</option>
-                  <option value="Disponible">Disponible</option>
                   <option value="Reservado">Reservado</option>
                   <option value="Vendido">Vendido</option>
                   <option value="Visitas">Visitas</option>
+                  <option value="Pendientes">Pendientes</option>
+                  <option value="Disponibles">Disponibles</option>
                 </select>
               </div>
 
@@ -286,14 +314,12 @@ export default function PropertiesPage() {
 
             <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 text-[18px] text-slate-400">
-                <div className="flex items-center gap-4">
-                  <span>
-                    <span className="font-semibold text-slate-700">
-                      Propiedades
-                    </span>{" "}
-                    {filteredProperties.length} registradas
-                  </span>
-                </div>
+                <span>
+                  <span className="font-semibold text-slate-700">
+                    Propiedades
+                  </span>{" "}
+                  {filteredProperties.length} registradas
+                </span>
 
                 <button
                   onClick={clearFilters}
@@ -314,21 +340,6 @@ export default function PropertiesPage() {
                       ? "Aún no hay propiedades registradas"
                       : "No se encontraron propiedades"}
                   </h2>
-
-                  <p className="mt-3 max-w-xl text-[17px] text-slate-500">
-                    {properties.length === 0
-                      ? "Empieza agregando tu primera propiedad para visualizarla aquí y administrarla dentro del sistema."
-                      : "Prueba cambiando la búsqueda o limpiando los filtros para ver más resultados."}
-                  </p>
-
-                  {properties.length === 0 && (
-                    <a
-                      href="/properties/new"
-                      className="mt-6 rounded-2xl bg-[#8bb58f] px-6 py-3 text-[17px] font-semibold text-white transition hover:opacity-90"
-                    >
-                      + Crear primera propiedad
-                    </a>
-                  )}
                 </div>
               ) : (
                 <>
@@ -350,7 +361,7 @@ export default function PropertiesPage() {
                       <tbody>
                         {filteredProperties.map((property) => (
                           <tr
-                            key={property.id}
+                            key={property.firestoreId}
                             className="border-b border-slate-100 text-[17px] text-slate-700"
                           >
                             <td className="px-6 py-5 text-slate-500">
@@ -359,14 +370,17 @@ export default function PropertiesPage() {
 
                             <td className="px-6 py-5">
                               <div className="flex items-center gap-4">
-                                <div className="relative h-[52px] w-[102px] overflow-hidden rounded-xl bg-slate-200">
-                                  <Image
-                                    src="/bg-login.png"
+                                <div className="h-[52px] w-[102px] overflow-hidden rounded-xl bg-slate-200">
+                                  <img
+                                    src={getPropertyImage(property)}
                                     alt={property.title}
-                                    fill
-                                    className="object-cover"
+                                    className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src = "/bg-login.png";
+                                    }}
                                   />
                                 </div>
+
                                 <span className="font-medium text-slate-800">
                                   {property.title}
                                 </span>
@@ -402,20 +416,25 @@ export default function PropertiesPage() {
                             <td className="px-6 py-5">
                               <div className="flex items-center gap-6 text-slate-500">
                                 <a
-                                  href={`/properties/${property.id}`}
+                                  href={`/properties/${property.firestoreId}`}
                                   className="transition hover:text-slate-800"
                                 >
                                   👁 Ver
                                 </a>
+
                                 <a
-                                  href={`/properties/edit/${property.id}`}
+                                  href={`/properties/edit/${property.firestoreId}`}
                                   className="transition hover:text-slate-800"
                                 >
                                   ✎ Editar
                                 </a>
+
                                 <button
                                   onClick={() =>
-                                    handleDelete(property.id, property.title)
+                                    handleDelete(
+                                      property.firestoreId,
+                                      property.title
+                                    )
                                   }
                                   className="transition hover:text-red-600"
                                 >
@@ -432,16 +451,15 @@ export default function PropertiesPage() {
                   <div className="space-y-4 p-4 lg:hidden">
                     {filteredProperties.map((property) => (
                       <div
-                        key={property.id}
+                        key={property.firestoreId}
                         className="rounded-2xl border border-slate-200 p-4"
                       >
                         <div className="flex gap-4">
-                          <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-200">
-                            <Image
-                              src="/bg-login.png"
+                          <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-200">
+                            <img
+                              src={getPropertyImage(property)}
                               alt={property.title}
-                              fill
-                              className="object-cover"
+                              className="h-full w-full object-cover"
                             />
                           </div>
 
@@ -449,18 +467,23 @@ export default function PropertiesPage() {
                             <p className="text-sm text-slate-400">
                               ID {property.id}
                             </p>
+
                             <h3 className="truncate text-lg font-semibold text-slate-800">
                               {property.title}
                             </h3>
+
                             <p className="mt-1 text-sm text-slate-500">
                               {property.location}
                             </p>
+
                             <p className="mt-1 text-sm text-slate-500">
                               {property.type}
                             </p>
+
                             <p className="mt-2 font-semibold text-slate-800">
                               Q{property.price.toLocaleString()}
                             </p>
+
                             <span
                               className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-sm font-semibold ${getStatusClasses(
                                 property.status
@@ -473,12 +496,24 @@ export default function PropertiesPage() {
 
                         <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
                           <span>Interesados: {property.interested}</span>
+
                           <div className="flex gap-4">
-                            <a href={`/properties/${property.id}`}>Ver</a>
-                            <a href={`/properties/edit/${property.id}`}>Editar</a>
+                            <a href={`/properties/${property.firestoreId}`}>
+                              Ver
+                            </a>
+
+                            <a
+                              href={`/properties/edit/${property.firestoreId}`}
+                            >
+                              Editar
+                            </a>
+
                             <button
                               onClick={() =>
-                                handleDelete(property.id, property.title)
+                                handleDelete(
+                                  property.firestoreId,
+                                  property.title
+                                )
                               }
                               className="text-red-600"
                             >
@@ -488,14 +523,6 @@ export default function PropertiesPage() {
                         </div>
                       </div>
                     ))}
-                  </div>
-
-                  <div className="flex items-center justify-end gap-3 px-6 py-5">
-                    <button className="text-lg text-slate-400">‹</button>
-                    <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8bb58f] font-semibold text-white">
-                      1
-                    </button>
-                    <button className="text-lg text-slate-400">›</button>
                   </div>
                 </>
               )}

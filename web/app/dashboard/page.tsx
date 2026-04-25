@@ -72,7 +72,7 @@ function StatCard({
           positive ? "text-emerald-600" : "text-rose-500"
         }`}
       >
-        {positive ? "↑" : "↓"} {change}
+        {change ? `${positive ? "↑" : "↓"} ${change}` : "Actualizado"}
       </p>
     </div>
   );
@@ -91,6 +91,10 @@ type Property = {
   location: string;
   price: number;
   interested: number;
+  status: string;
+  createdAt?: {
+    seconds: number;
+  };
 };
 
 export default function DashboardPage() {
@@ -131,10 +135,23 @@ export default function DashboardPage() {
         }
 
         const propertiesSnapshot = await getDocs(collection(db, "properties"));
-        const propertiesData: Property[] = propertiesSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Property, "id">),
-        }));
+
+        const propertiesData: Property[] = propertiesSnapshot.docs.map(
+          (docItem) => {
+            const data = docItem.data() as Partial<Property>;
+
+            return {
+              id: data.id || docItem.id,
+              title: data.title || "",
+              type: data.type || "",
+              location: data.location || "",
+              price: Number(data.price || 0),
+              interested: Number(data.interested || 0),
+              status: data.status || "Disponible",
+              createdAt: data.createdAt,
+            };
+          }
+        );
 
         setProperties(propertiesData);
       } catch (error) {
@@ -155,8 +172,76 @@ export default function DashboardPage() {
   const nombreCompleto = `${nombre} ${apellido}`.trim() || "Usuario";
 
   const totalInterested = properties.reduce(
-    (sum, property) => sum + property.interested,
+    (sum, property) => sum + Number(property.interested || 0),
     0
+  );
+
+  const soldProperties = properties.filter(
+    (property) =>
+      property.status === "Vendido" || property.status === "Vendidos"
+  );
+
+  const monthlySales = soldProperties.reduce(
+    (sum, property) => sum + Number(property.price || 0),
+    0
+  );
+
+  const conversionRate =
+    properties.length > 0
+      ? ((soldProperties.length / properties.length) * 100).toFixed(1)
+      : "0";
+  
+  
+
+  const currentMonth = new Date().getMonth();
+
+  const monthlySalesData = Array.from({ length: 12 }, (_, index) => {
+    const total = soldProperties
+      .filter((property) => {
+        if (!property.createdAt?.seconds) {
+          return index === currentMonth;
+        }
+
+        const date = new Date(property.createdAt.seconds * 1000);
+        return date.getMonth() === index;
+      })
+      .reduce((sum, property) => sum + Number(property.price || 0), 0);
+
+    return total;
+  });
+
+  const maxMonthlySales = Math.max(...monthlySalesData, 1);
+
+  const statusData = [
+    {
+      label: "DISP",
+      total: properties.filter(
+        (p) => p.status === "Disponible" || p.status === "Disponibles"
+      ).length,
+    },
+    {
+      label: "RES",
+      total: properties.filter(
+        (p) => p.status === "Reservado" || p.status === "Reservados"
+      ).length,
+    },
+    {
+      label: "VEND",
+      total: soldProperties.length,
+    },
+    {
+      label: "VIS",
+      total: properties.filter((p) => p.status === "Visitas").length,
+    },
+    {
+      label: "PEND",
+      total: properties.filter((p) => p.status === "Pendientes").length,
+    },
+  ];
+
+  const maxStatusTotal = Math.max(
+    ...statusData.map((item) => item.total),
+    1
   );
 
   return (
@@ -250,27 +335,29 @@ export default function DashboardPage() {
               <StatCard
                 icon={<DollarSign className="h-6 w-6 text-emerald-600" />}
                 title="Ventas del mes"
-                value="$48,250"
-                change="12.5%"
+                value={`Q${monthlySales.toLocaleString()}`}
+                change=""
               />
+
               <StatCard
                 icon={<Users className="h-6 w-6 text-sky-600" />}
                 title="Personas interesadas"
                 value={totalInterested.toString()}
                 change=""
               />
+
               <StatCard
                 icon={<Home className="h-6 w-6 text-sky-600" />}
                 title="Propiedades registradas"
                 value={properties.length.toString()}
                 change=""
               />
+
               <StatCard
                 icon={<Check className="h-6 w-6 text-emerald-600" />}
                 title="Tasa de conversión"
-                value="9.8%"
-                change="0.4%"
-                positive={false}
+                value={`${conversionRate}%`}
+                change=""
               />
             </div>
 
@@ -281,28 +368,35 @@ export default function DashboardPage() {
                     Ventas por mes
                   </h3>
                   <span className="rounded-2xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white">
-                    $14,300
+                    Q{monthlySales.toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex h-[250px] items-end justify-between gap-3 rounded-2xl bg-gradient-to-b from-emerald-50 to-white p-4">
-                  {[40, 30, 52, 35, 44, 78, 65, 72, 60, 66, 70, 88].map(
-                    (h, i) => (
+                  {monthlySalesData.map((amount, i) => {
+                    const height = Math.max(
+                      (amount / maxMonthlySales) * 190,
+                      12
+                    );
+
+                    return (
                       <div
                         key={i}
                         className="flex flex-1 flex-col items-center gap-3"
                       >
                         <div
+                          title={`Q${amount.toLocaleString()}`}
                           className="w-full rounded-t-2xl bg-emerald-300/80"
-                          style={{ height: `${h * 2}px` }}
+                          style={{ height: `${height}px` }}
                         />
+
                         <span className="text-xs font-medium text-slate-400">
                           {
                             [
                               "ENE",
                               "FEB",
                               "MAR",
-                              "APR",
+                              "ABR",
                               "MAY",
                               "JUN",
                               "JUL",
@@ -310,13 +404,13 @@ export default function DashboardPage() {
                               "SEP",
                               "OCT",
                               "NOV",
-                              "DEC",
+                              "DIC",
                             ][i]
                           }
                         </span>
                       </div>
-                    )
-                  )}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -324,34 +418,49 @@ export default function DashboardPage() {
                 <div className="mb-3 flex items-start justify-between">
                   <div>
                     <h3 className="text-[22px] font-semibold text-slate-800">
-                      Citas por semana
+                      Estado de propiedades
                     </h3>
                     <p className="mt-2 text-lg font-medium text-emerald-600">
-                      ↑ 8 esta semana
+                      Basado en Firebase
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <p className="text-6xl font-semibold text-slate-800">38</p>
-                    <p className="text-xl text-slate-400">Cada uno</p>
+                    <p className="text-6xl font-semibold text-slate-800">
+                      {properties.length}
+                    </p>
+                    <p className="text-xl text-slate-400">Total</p>
                   </div>
                 </div>
 
-                <div className="mt-6 flex h-[220px] items-end justify-between gap-4 rounded-2xl bg-slate-50 p-5">
-                  {[60, 95, 70, 135, 96, 112, 116].map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex flex-1 flex-col items-center gap-3"
-                    >
+                <div className="mt-6 flex h-[220px] items-end justify-between gap-4 rounded-2xl bg-slate-50 px-5 pb-5 pt-12">
+                  {statusData.map((item) => {
+                    const height =
+                      item.total > 0
+                        ? Math.max((item.total / maxStatusTotal) * 120, 16)
+                        : 6;
+
+                    return (
                       <div
-                        className="w-full rounded-t-xl bg-emerald-400"
-                        style={{ height: `${h}px` }}
-                      />
-                      <span className="text-xs font-medium text-slate-400">
-                        {["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"][i]}
-                      </span>
-                    </div>
-                  ))}
+                        key={item.label}
+                        className="flex flex-1 flex-col items-center gap-3"
+                      >
+                        <div
+                          title={`${item.total} propiedades`}
+                          className="w-full rounded-t-xl bg-emerald-400"
+                          style={{ height: `${height}px` }}
+                        />
+
+                        <span className="text-xs font-medium text-slate-400">
+                          {item.label}
+                        </span>
+
+                        <span className="text-sm font-semibold text-slate-700">
+                          {item.total}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -369,6 +478,7 @@ export default function DashboardPage() {
                       <th className="px-6 py-4 font-medium">Tipo</th>
                       <th className="px-6 py-4 font-medium">Ubicación</th>
                       <th className="px-6 py-4 font-medium">Precio</th>
+                      <th className="px-6 py-4 font-medium">Estado</th>
                     </tr>
                   </thead>
 
@@ -378,11 +488,16 @@ export default function DashboardPage() {
                         key={property.id}
                         className="border-t border-slate-100 text-[16px] text-slate-700"
                       >
-                        <td className="px-6 py-5 font-medium">{property.title}</td>
+                        <td className="px-6 py-5 font-medium">
+                          {property.title}
+                        </td>
                         <td className="px-6 py-5">{property.type}</td>
                         <td className="px-6 py-5">{property.location}</td>
                         <td className="px-6 py-5 text-slate-500">
                           Q{property.price.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-5 text-slate-500">
+                          {property.status}
                         </td>
                       </tr>
                     ))}
