@@ -82,6 +82,7 @@ type UserProfile = {
   nombre: string;
   apellido: string;
   email: string;
+  profileImageUrl?: string;
 };
 
 type Property = {
@@ -125,12 +126,14 @@ export default function DashboardPage() {
             nombre: data.nombre || "",
             apellido: data.apellido || "",
             email: data.email || user.email || "",
+            profileImageUrl: data.profileImageUrl || "",
           });
         } else {
           setUserProfile({
             nombre: "",
             apellido: "",
             email: user.email || "",
+            profileImageUrl: "",
           });
         }
 
@@ -312,12 +315,10 @@ export default function DashboardPage() {
 
               <div className="flex min-w-[320px] items-center justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <Image
-                    src="/avatar-user.png"
+                  <img
+                    src={userProfile?.profileImageUrl || "/avatar-user.png"}
                     alt={nombreCompleto}
-                    width={58}
-                    height={58}
-                    className="rounded-full object-cover"
+                    className="h-[58px] w-[58px] rounded-full object-cover"
                   />
                   <div>
                     <p className="text-[18px] font-semibold text-slate-700">
