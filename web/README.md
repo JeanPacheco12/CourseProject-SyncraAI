@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+README — Syncra Estate AI (Web)
+Descripción
 
-## Getting Started
+Aplicación web desarrollada con Next.js + TypeScript + Tailwind CSS, conectada a Firebase (Auth + Firestore) para la gestión de propiedades y clientes.
 
-First, run the development server:
+Permite:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+  CRUD de propiedades
+  CRUD de clientes
+  Relación cliente ↔ propiedad
+  Dashboard con métricas en tiempo real
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tecnologías
+  Next.js
+  TypeScript (TSX)
+  Tailwind CSS
+  Firebase Auth
+  Cloud Firestore
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Arquitectura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Usuario
+   |
+   v
+Web App (Next.js)
+   |-------- Firebase Auth
+   |
+   |-------- Firestore
+                 |
+        ---------------------
+        |        |          |
+   Propiedades  Clientes  Relaciones
 
-## Learn More
+Autenticación
+  Usuario --- login/register ---> Web
+  Web --- request ---> Firebase Auth
+  Firebase --- token ---> Web
+  Web --- acceso ---> Dashboard
 
-To learn more about Next.js, take a look at the following resources:
+Módulo Propiedades
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Funciones:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+  Crear
+  Editar
+  Eliminar
+  Listar
 
-## Deploy on Vercel
+Estructura:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Property
+ ├─ id
+ ├─ title
+ ├─ type
+ ├─ location
+ ├─ price
+ ├─ status
+ └─ imageGalleryUrlList[]
+ 
+Módulo Clientes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Funciones:
+  
+  Crear
+  Editar
+  Eliminar
+  Asociar propiedad
+
+Estructura:
+
+Client
+ ├─ id
+ ├─ nombre
+ ├─ telefono
+ ├─ email
+ ├─ interest
+ └─ propertyId
+ 
+Relación Cliente ↔ Propiedad
+  Cliente --- selecciona ---> Propiedad
+  Cliente --- guarda ---> propertyId
+  Firestore --- actualiza ---> datos
+  Dashboard --- muestra ---> interesados
+
+Dashboard
+
+Muestra:
+
+  Total propiedades
+  Ventas del mes
+  Total interesados
+  Estado de propiedades (Disponible / Vendido / Reservado)
+  
+Propiedades --- estado (status) ---> Firestore
+Firestore --- datos ---> Web
+Web --- agrupa por estado ---> métricas
+Web --- render ---> Dashboard
+
+El estado de cada propiedad impacta directamente las gráficas y conteos del dashboard.
+
+Flujo General
+Usuario
+  |
+  v
+Login
+  |
+  v
+Dashboard
+  |--------- Propiedades (CRUD)
+  |                |
+  |                v
+  |        Guardar estado (status)
+  |
+  |--------- Clientes (CRUD)
+                     |
+                     v
+              Asignar propiedad
+                     |
+                     v
+                 Firestore
+                     |
+                     v
+                 Dashboard (métricas actualizadas)
+                 
+Estructura de Páginas
+  Imports
+  Tipos de datos
+  Lógica
+  Render (UI)
+  
+Decisiones Técnicas
+  No se usa Firebase Storage → imágenes como URLs
+  Firestore para datos en tiempo real
+  Tailwind para desarrollo rápido
+  TypeScript para control de errores
+  
+Estado Actual
+  UI completa
+  CRUD funcional
+  Integración con Firebase
+  Dashboard dinámico basado en datos reales
