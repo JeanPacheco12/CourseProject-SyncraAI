@@ -21,6 +21,8 @@ type Property = {
   price: number;
   status: string;
   interested?: number;
+  images?: string[];
+  imageGalleryUrlList?: string[];
 };
 
 type Client = {
@@ -127,7 +129,11 @@ export default function PropertyDetailPage() {
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="relative h-[280px] w-full bg-slate-200">
             <Image
-              src="/bg-login.png"
+              src={
+                property.imageGalleryUrlList?.[0] ||
+                property.images?.[0] ||
+                "/bg-login.png"
+              }
               alt={property.title}
               fill
               className="object-cover"
