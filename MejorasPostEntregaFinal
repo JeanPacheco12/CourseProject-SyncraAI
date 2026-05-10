@@ -5,3 +5,7 @@
   Se configuraron múltiples dominios externos en next.config.ts para permitir el uso de next/image con URLs externas.
   Se modificó la creación de propiedades en Firestore para que el ID personalizado (prop_X) sea utilizado como ID real del documento mediante setDoc, en lugar de IDs automáticos.
   Se añadió lógica de fallback para imágenes, evitando errores cuando no hay imágenes disponibles.
+  Se corrigió el cálculo de ventas por mes para usar la fecha real (createdAt) de cada propiedad.
+  Se implementó conversión correcta de Timestamp de Firebase a Date.
+  Se evitó que las ventas cambien de mes incorrectamente (bug donde todo pasaba al mes actual).
+  Se mejoró la agrupación mensual para mantener consistencia en métricas.
