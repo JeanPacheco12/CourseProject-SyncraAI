@@ -1,1 +1,7 @@
+
 1. Creación de README.md para parte web y android, mucho más detallado en termino de funionalidad y division de partes importantes.
+2. Web
+  Se corrigió la carga de imágenes dinámicas desde Firebase, utilizando los campos imageGalleryUrlList e images en lugar de imágenes estáticas.
+  Se configuraron múltiples dominios externos en next.config.ts para permitir el uso de next/image con URLs externas.
+  Se modificó la creación de propiedades en Firestore para que el ID personalizado (prop_X) sea utilizado como ID real del documento mediante setDoc, en lugar de IDs automáticos.
+  Se añadió lógica de fallback para imágenes, evitando errores cuando no hay imágenes disponibles.
