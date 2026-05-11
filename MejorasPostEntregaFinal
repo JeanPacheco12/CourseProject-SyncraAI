@@ -1,11 +1,22 @@
+# Changelog - Syncra Estate AI
 
-1. Creación de README.md para parte web y android, mucho más detallado en termino de funionalidad y division de partes importantes.
-2. Web
-  Se corrigió la carga de imágenes dinámicas desde Firebase, utilizando los campos imageGalleryUrlList e images en lugar de imágenes estáticas.
-  Se configuraron múltiples dominios externos en next.config.ts para permitir el uso de next/image con URLs externas.
-  Se modificó la creación de propiedades en Firestore para que el ID personalizado (prop_X) sea utilizado como ID real del documento mediante setDoc, en lugar de IDs automáticos.
-  Se añadió lógica de fallback para imágenes, evitando errores cuando no hay imágenes disponibles.
-  Se corrigió el cálculo de ventas por mes para usar la fecha real (createdAt) de cada propiedad.
-  Se implementó conversión correcta de Timestamp de Firebase a Date.
-  Se evitó que las ventas cambien de mes incorrectamente (bug donde todo pasaba al mes actual).
-  Se mejoró la agrupación mensual para mantener consistencia en métricas.
+Todos los cambios notables en este proyecto a partir del cierre de la entrega final (3 de mayo) serán documentados en este archivo.
+
+## [Post-Entrega Final] - 2026-05-11
+
+Los cambios se dividen en las siguientes secciones:
+
+### Añadido (Added)
+- **Documentación Técnica:** Se agregaron nuevos diagramas de arquitectura con estética *Glassmorphism* para las fases 6 (Beta) y 7 (Final), diferenciando los flujos de trabajo de Web y Android.
+- **Documentación de Proyecto:** Creación de archivos `README.md` exhaustivos tanto en la raíz de la parte Web como en la de Android, detallando requisitos de instalación, variables de entorno y arquitectura MVVM.
+- **Android:** Documentación clara sobre la configuración de `google-services.json` y `local.properties` para la recuperación del proyecto en nuevos entornos de desarrollo.
+
+### Corregido (Fixed)
+- **Web (Imágenes):** Se corrigió la carga de imágenes dinámicas desde Firebase Storage. Ahora el sistema utiliza los campos `imageGalleryUrlList` e `images` de la base de datos en lugar de assets estáticos.
+- **Web (Rendimiento):** Configuración de dominios externos en `next.config.ts` para permitir la optimización de imágenes mediante el componente `next/image`.
+- **Web (Métricas):** Se corrigió un bug crítico en el Dashboard donde el cálculo de ventas por mes mostraba todos los ingresos en el mes actual. Ahora se utiliza la fecha real (`createdAt`) con conversión correcta de `Timestamp` de Firebase a `Date`.
+- **Android (Estabilidad):** Se implementó una lógica de manejo de errores (fallback) para la API de Gemini, evitando cierres inesperados de la app cuando la API Key no está configurada o hay problemas de red.
+
+### Cambiado (Changed)
+- **Base de Datos:** Se modificó la lógica de creación de propiedades en Firestore. Ahora el sistema utiliza un ID personalizado (formato `prop_X`) como ID real del documento (`setDoc`) en lugar de generar IDs automáticos de Firebase, facilitando la trazabilidad entre plataformas.
+- **Web (UI):** Mejora en la visualización de las listas de propiedades con lógica de *fallback* para mostrar imágenes por defecto cuando no hay contenido multimedia disponible.
