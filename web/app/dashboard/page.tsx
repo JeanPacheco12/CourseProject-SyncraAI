@@ -82,6 +82,13 @@ type UserProfile = {
   nombre: string;
   apellido: string;
   email: string;
+  profileImageUrl?: string;
+};
+
+type FirestoreTimestamp = {
+  seconds: number;
+  nanoseconds?: number;
+  toDate?: () => Date;
 };
 
 type Property = {
@@ -92,9 +99,7 @@ type Property = {
   price: number;
   interested: number;
   status: string;
-  createdAt?: {
-    seconds: number;
-  };
+  createdAt?: FirestoreTimestamp | Date;
 };
 
 export default function DashboardPage() {
@@ -105,6 +110,24 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/");
+  };
+
+  const getPropertyDate = (createdAt?: FirestoreTimestamp | Date) => {
+    if (!createdAt) return null;
+
+    if (createdAt instanceof Date) {
+      return createdAt;
+    }
+
+    if ("toDate" in createdAt && typeof createdAt.toDate === "function") {
+      return createdAt.toDate();
+    }
+
+    if ("seconds" in createdAt) {
+      return new Date(createdAt.seconds * 1000);
+    }
+
+    return null;
   };
 
   useEffect(() => {
@@ -125,12 +148,14 @@ export default function DashboardPage() {
             nombre: data.nombre || "",
             apellido: data.apellido || "",
             email: data.email || user.email || "",
+            profileImageUrl: data.profileImageUrl || "",
           });
         } else {
           setUserProfile({
             nombre: "",
             apellido: "",
             email: user.email || "",
+            profileImageUrl: "",
           });
         }
 
@@ -181,29 +206,30 @@ export default function DashboardPage() {
       property.status === "Vendido" || property.status === "Vendidos"
   );
 
-  const monthlySales = soldProperties.reduce(
-    (sum, property) => sum + Number(property.price || 0),
-    0
-  );
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  const monthlySales = soldProperties
+    .filter((property) => {
+      const date = getPropertyDate(property.createdAt);
+      if (!date) return false;
+
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    })
+    .reduce((sum, property) => sum + Number(property.price || 0), 0);
 
   const conversionRate =
     properties.length > 0
       ? ((soldProperties.length / properties.length) * 100).toFixed(1)
       : "0";
-  
-  
-
-  const currentMonth = new Date().getMonth();
 
   const monthlySalesData = Array.from({ length: 12 }, (_, index) => {
     const total = soldProperties
       .filter((property) => {
-        if (!property.createdAt?.seconds) {
-          return index === currentMonth;
-        }
+        const date = getPropertyDate(property.createdAt);
+        if (!date) return false;
 
-        const date = new Date(property.createdAt.seconds * 1000);
-        return date.getMonth() === index;
+        return date.getMonth() === index && date.getFullYear() === currentYear;
       })
       .reduce((sum, property) => sum + Number(property.price || 0), 0);
 
@@ -239,10 +265,7 @@ export default function DashboardPage() {
     },
   ];
 
-  const maxStatusTotal = Math.max(
-    ...statusData.map((item) => item.total),
-    1
-  );
+  const maxStatusTotal = Math.max(...statusData.map((item) => item.total), 1);
 
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-800">
@@ -264,24 +287,14 @@ export default function DashboardPage() {
           </div>
 
           <nav className="flex-1 space-y-2 px-5">
-            <SidebarItem
-              icon={<Home className="h-5 w-5" />}
-              label="Dashboard"
-              active
-            />
+            <SidebarItem icon={<Home className="h-5 w-5" />} label="Dashboard" active />
 
             <Link href="/properties">
-              <SidebarItem
-                icon={<Grid2x2 className="h-5 w-5" />}
-                label="Propiedades"
-              />
+              <SidebarItem icon={<Grid2x2 className="h-5 w-5" />} label="Propiedades" />
             </Link>
 
             <Link href="/contacts">
-              <SidebarItem
-                icon={<User className="h-5 w-5" />}
-                label="Contactos"
-              />
+              <SidebarItem icon={<User className="h-5 w-5" />} label="Contactos" />
             </Link>
           </nav>
 
@@ -312,12 +325,10 @@ export default function DashboardPage() {
 
               <div className="flex min-w-[320px] items-center justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <Image
-                    src="/avatar-user.png"
+                  <img
+                    src={userProfile?.profileImageUrl || "/avatar-user.png"}
                     alt={nombreCompleto}
-                    width={58}
-                    height={58}
-                    className="rounded-full object-cover"
+                    className="h-[58px] w-[58px] rounded-full object-cover"
                   />
                   <div>
                     <p className="text-[18px] font-semibold text-slate-700">
@@ -374,16 +385,10 @@ export default function DashboardPage() {
 
                 <div className="flex h-[250px] items-end justify-between gap-3 rounded-2xl bg-gradient-to-b from-emerald-50 to-white p-4">
                   {monthlySalesData.map((amount, i) => {
-                    const height = Math.max(
-                      (amount / maxMonthlySales) * 190,
-                      12
-                    );
+                    const height = Math.max((amount / maxMonthlySales) * 190, 12);
 
                     return (
-                      <div
-                        key={i}
-                        className="flex flex-1 flex-col items-center gap-3"
-                      >
+                      <div key={i} className="flex flex-1 flex-col items-center gap-3">
                         <div
                           title={`Q${amount.toLocaleString()}`}
                           className="w-full rounded-t-2xl bg-emerald-300/80"
@@ -441,10 +446,7 @@ export default function DashboardPage() {
                         : 6;
 
                     return (
-                      <div
-                        key={item.label}
-                        className="flex flex-1 flex-col items-center gap-3"
-                      >
+                      <div key={item.label} className="flex flex-1 flex-col items-center gap-3">
                         <div
                           title={`${item.total} propiedades`}
                           className="w-full rounded-t-xl bg-emerald-400"
@@ -488,9 +490,7 @@ export default function DashboardPage() {
                         key={property.id}
                         className="border-t border-slate-100 text-[16px] text-slate-700"
                       >
-                        <td className="px-6 py-5 font-medium">
-                          {property.title}
-                        </td>
+                        <td className="px-6 py-5 font-medium">{property.title}</td>
                         <td className="px-6 py-5">{property.type}</td>
                         <td className="px-6 py-5">{property.location}</td>
                         <td className="px-6 py-5 text-slate-500">

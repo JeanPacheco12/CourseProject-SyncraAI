@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
@@ -54,7 +54,7 @@ export default function NewPropertyPage() {
       const snapshot = await getDocs(collection(db, "properties"));
       const nextId = `prop_${snapshot.size + 1}`;
 
-      await addDoc(collection(db, "properties"), {
+      await setDoc(doc(db, "properties", nextId), {
         id: nextId,
         title,
         type,
@@ -80,12 +80,13 @@ export default function NewPropertyPage() {
   return (
     <main className="p-10">
       <h1 className="mb-6 text-3xl font-bold">Nueva propiedad</h1>
-       <button
-          onClick={() => router.push("/properties")}
-          className="mb-6 rounded-xl border px-4 py-2"
-        >
-          ← Volver
-        </button>
+
+      <button
+        onClick={() => router.push("/properties")}
+        className="mb-6 rounded-xl border px-4 py-2"
+      >
+        ← Volver
+      </button>
 
       <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
         <input
