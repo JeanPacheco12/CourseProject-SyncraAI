@@ -55,14 +55,14 @@ Transición de la aplicación de un prototipo estático a un ecosistema conectad
 * **Web:** https://youtu.be/7NwZa-huAxE?si=Ywem2w2ZM7Ppknng
 * **Mobile:** https://youtu.be/kPmU4j2I95Q
 
-* ### 📹 Fase 5 (Progress Report)
+### 📹 Fase 5 (Progress Report)
 * **Web:** https://youtu.be/woswRWjAKlE?si=ZMD_yC2lLPiYPbzo
 * **Mobile:** https://youtu.be/YRLINZJYda8
 
-* ### 📹 Fase 6 (Pre-delivery (Beta))
+### 📹 Fase 6 (Pre-delivery (Beta))
 * **Web:** 
-* **Mobile:** 
+* **Mobile:** https://youtu.be/TvjWvp1g7uQ
 
-* ### 📹 Fase 7 (Final Project)
+### 📹 Fase 7 (Final Project)
 * **Web:** 
-* **Mobile:** 
+* **Mobile:** https://youtu.be/5r4LPNWrPEg
